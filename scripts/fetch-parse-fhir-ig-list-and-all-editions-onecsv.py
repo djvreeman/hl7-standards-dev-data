@@ -8,8 +8,8 @@
 # by calling the canonical URL and retrieving the package-list.json
 # It then exports a CSV with the key metadata by package release
 #
-# Note: not all packages (e.g. many IHE published profiles) have a package-list.json, and thus those are expluded
-# from the CSV export
+# Note: not all packages (e.g. many IHE published profiles) have a package-list.json, and thus those would not have
+# any content in the CSV export
 # 
 # Export: this script writes the csv file to: ../data/all_packages_data.csv
 # 

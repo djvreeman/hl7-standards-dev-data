@@ -1,3 +1,8 @@
+# To use this script, you would save it as a .py file and run it from the command line, providing the path or URL as an argument. For example:
+#   python script.py path/to/yourfile.json
+# or
+#  python script.py https://raw.githubusercontent.com/HL7/fhir-ig-publisher/master/test-statistics.json
+
 import argparse
 import json
 import matplotlib.pyplot as plt

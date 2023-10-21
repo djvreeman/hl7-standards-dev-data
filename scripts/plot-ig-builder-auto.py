@@ -1,21 +1,37 @@
+# Description:
 # This script reads the output log of the IG Publisher release build process (either from the filesystem or the URL)
 # It parses the time info, converts the millisecond values to seconds (for visualization purposes),
 # and then plots the results for each tested IG.
 #
-# USAGE
-# Run it from the command line, providing the path or URL as an argument. 
+# Usage:
+# Run it from the command line, providing the path or URL as an argument.
+# If no argument is passed, it defaults to the github test-statistics URL
+#
 # For example:
 #   python script.py path/to/yourfile.json
 # or
 #  python script.py https://raw.githubusercontent.com/HL7/fhir-ig-publisher/master/test-statistics.json
-# 
-# The matplotlib runs in interactive mode, where the use can save the image to a png if they wish.
+#
+# Output:
+# The plotted graph is stored as a png in a subdirectory:
+# ../data/publisher-build-time-trends/{latest-version}.png
 
 import argparse
 import json
 import matplotlib.pyplot as plt
 import requests
 import sys
+import os
+
+# Function to parse and sort version numbers
+def parse_version(version):
+    # Split version into major, minor, and patch, and convert them to integers
+    try:
+        # Original code is now in the 'try' block, indented.
+        major, minor, patch = map(int, version.split('.'))
+        return major, minor, patch
+    except ValueError:  # Handling non-integer splits
+        return (0, 0, 0)  # Default value for non-version strings
 
 def load_json_data(source):
     if source.startswith('http://') or source.startswith('https://'):
@@ -34,6 +50,22 @@ def main(source):
 
     # Prepare data for visualization
     build_times = {}  # Structure to hold the build times
+
+    # Extracting the keys, which represent version numbers
+    version_keys = list(data.keys())
+    version_keys = [key for key in version_keys if key[0].isdigit()]
+
+    # Sorting the version numbers
+    sorted_versions = sorted(version_keys, key=parse_version)
+
+    # The latest version is the last one in the sorted list
+    latest_version = sorted_versions[-1]
+
+    # ... [The script continues here. The rest of the script remains unchanged.]
+
+
+    # Construct the filename using the version number
+    filename = f"{latest_version}.png"
 
     # Process the JSON data
     for version, guides in data.items():
@@ -65,18 +97,32 @@ def main(source):
     plt.legend(bbox_to_anchor=(1.05, 1), loc='upper left')
     plt.xticks(rotation=45)
     plt.tight_layout()
-    plt.show()
+    
+    # NEW: Specify the directory and create it if it doesn't exist
+    directory = "../data/publisher-build-time-trends"
+    if not os.path.exists(directory):
+        os.makedirs(directory)
+
+    # NEW: Modify the filename to include the directory path
+    filename = os.path.join(directory, filename)
+
+    # Save the figure
+    plt.savefig(filename)
+    # plt.show()
+
+    plt.close(filename)
 
 if __name__ == "__main__":
     # Set up the command-line argument parser
     parser = argparse.ArgumentParser(description='Visualize FHIR IG Publisher build times.')
-    parser.add_argument('source', help='Path to the JSON file or URL to the JSON data')
+    parser.add_argument('--source', type=str, help='The path or URL to the JSON data source')
 
     # Parse the arguments
     args = parser.parse_args()
+    args.source = args.source if args.source else 'https://raw.githubusercontent.com/HL7/fhir-ig-publisher/master/test-statistics.json'
 
     try:
         main(args.source)
     except Exception as e:
         print(f"Error: {str(e)}", file=sys.stderr)
-        sys.exit(1)
+    args.source = args.source if (args.source is not None) else 'https://raw.githubusercontent.com/HL7/fhir-ig-publisher/master/test-statistics.json'

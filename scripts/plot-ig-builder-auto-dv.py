@@ -99,24 +99,23 @@ def main(source):
     plt.tight_layout()
     
     # NEW: Specify the directory and create it if it doesn't exist
-    # directory = "../data/publisher-build-time-trends"
-    # if not os.path.exists(directory):
-    #    os.makedirs(directory)
+    directory = "../data/publisher-build-time-trends"
+    if not os.path.exists(directory):
+        os.makedirs(directory)
 
     # NEW: Modify the filename to include the directory path
-    # filename = os.path.join(directory, filename)
+    filename = os.path.join(directory, filename)
 
     # Save the figure
-    plt.savefig(args.output)
+    plt.savefig(filename)
     # plt.show()
 
-    plt.close(args.output)
+    plt.close(filename)
 
 if __name__ == "__main__":
     # Set up the command-line argument parser
     parser = argparse.ArgumentParser(description='Visualize FHIR IG Publisher build times.')
     parser.add_argument('--source', type=str, help='The path or URL to the JSON data source')
-    parser.add_argument('-o', '--output', type=str, help='Output filename with path', default='../data/publisher-build-time-trends/latest-version.png')  # You can change the default to any relevant path or filename.
 
     # Parse the arguments
     args = parser.parse_args()

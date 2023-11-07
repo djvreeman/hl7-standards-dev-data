@@ -11,7 +11,7 @@
 # Note: not all packages (e.g. many IHE published profiles) have a package-list.json, and thus those would not have
 # any content in the CSV export
 # 
-# Export: this script writes the csv file to: ../data/all_packages_data.csv
+# Export: this script writes the csv file to: ../data/all-fhir-packages/all_packages_data.csv
 # 
 # Usage:
 # python3 fetch-parse-fhir-ig-list-and-all-editions-onecsv.py  
@@ -88,5 +88,5 @@ def fetch_and_process_guides(url, output_filename):
 
 if __name__ == "__main__":
     url = "https://raw.githubusercontent.com/FHIR/ig-registry/master/fhir-ig-list.json"
-    output_filename = "../data/all_packages_data.csv"
+    output_filename = "../data/all-fhir-packages/all_packages_data.csv"
     fetch_and_process_guides(url, output_filename)

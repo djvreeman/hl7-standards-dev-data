@@ -7,7 +7,7 @@
 # hooked up to the pipeline.
 
 # Usage:
-# python3 parse-builds-web.py -o builds/build-repos.csv
+# python3 parse-builds-web.py -o ../data/builds/build-repos.csv
 
 
 import csv

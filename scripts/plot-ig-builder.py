@@ -52,19 +52,27 @@ def main(source):
             build_times[guide_name][version] = time
 
     # Create the visualization
+    # Create a figure with a specific size (16x9 inches here) and an axes object
+    # Create a figure with the 'constrained_layout' feature enabled.
+    fig, ax = plt.subplots(figsize=(16, 9), constrained_layout=True)
+
     for guide, times in build_times.items():
         sorted_items = sorted(times.items())
         versions = [item[0] for item in sorted_items]
         timings = [item[1] for item in sorted_items]
 
-        plt.plot(versions, timings, marker='o', label=guide)
+        ax.plot(versions, timings, marker='o', label=guide)
 
-    plt.ylabel('Build Time (seconds)')  # Update label to reflect new units
-    plt.xlabel('Version')
-    plt.title('Build Time for each Implementation Guide by Version')
-    plt.legend(bbox_to_anchor=(1.05, 1), loc='upper left')
-    plt.xticks(rotation=45)
-    plt.tight_layout()
+    # Set labels, legend, etc.
+    ax.set_ylabel('Build Time (seconds)')
+    ax.set_xlabel('Version')
+    ax.set_title('Build Time for each Implementation Guide by Version')
+
+    plt.xticks(rotation=45)  # this still works on the current figure
+    plt.tight_layout()  # this affects the current figure, so it's okay
+
+    # If you are saving the figure, use the following command:
+    # fig.savefig('output.png', bbox_inches='tight')  # using `fig` instead of `plt`
     plt.show()
 
 if __name__ == "__main__":

@@ -38,7 +38,7 @@ password = getpass.getpass("Remote Password (or skip for no auth): ")
 server = "http://standups.hl7.org/wp-json/wp/v2/posts"
 page = args.p
 params = "?_fields=title,date&per_page=100&order=asc&page="
-dataOutput = "standups.hl7.org" + page + ".csv"
+dataOutput = "../data/standups.hl7.org/standups.hl7.org" + page + ".csv"
 fhirHeader = {}
 #fhirHeader['Content-Type'] = "application/fhir+json;charset=utf-8"
 

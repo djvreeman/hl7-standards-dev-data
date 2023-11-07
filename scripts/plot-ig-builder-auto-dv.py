@@ -5,7 +5,7 @@
 #
 # Usage:
 # Run it from the command line, providing the path or URL as an argument.
-# If no argument is passed, it defaults to the github test-statistics URL
+# If NO argument is passed, it defaults to the github test-statistics URL
 #
 # For example:
 #   python script.py path/to/yourfile.json
@@ -60,9 +60,6 @@ def main(source):
 
     # The latest version is the last one in the sorted list
     latest_version = sorted_versions[-1]
-
-    # ... [The script continues here. The rest of the script remains unchanged.]
-
 
     # Construct the filename using the version number
     filename = f"{latest_version}.png"

@@ -86,8 +86,9 @@ def main(source):
     num_guides = len(build_times)
 
     # Define the colormaps
-    cmap1 = plt.get_cmap('tab20', 20)
-    cmap2 = plt.get_cmap('tab20b', 20)
+    # More on colormaps: https://matplotlib.org/stable/gallery/color/colormap_reference.html
+    cmap1 = plt.get_cmap('tab20', 20) # This map has 20 distinct colors
+    cmap2 = plt.get_cmap('tab20b', 20) # This map has 20 distinct colors too
     cmap3 = plt.get_cmap('tab20c', 20)
 
     # Initialize an empty list to store the colors
@@ -100,25 +101,46 @@ def main(source):
 
     # Add colors from each colormap to the combined list
     add_colors_from_cmap(cmap1, 20, combined_colors)
-    #add_colors_from_cmap(cmap2, 20, combined_colors)
+    add_colors_from_cmap(cmap2, 20, combined_colors)
     #add_colors_from_cmap(cmap3, 20, combined_colors)
 
     # Create the visualization
     color_index = 0
+
+    # Assuming 'build_times' is a dictionary where keys are guide names and values are dictionaries
+    # of version: build_time pairs.
+    # Start by collecting all timings and labels
+    timing_label_pairs = []
+
     for guide, times in build_times.items():
+        # Extract the total build time for the current guide
+        total_build_time = sum(times.values())
+        # Append the total build time and the guide label to the list as a tuple
+        timing_label_pairs.append((total_build_time, guide))
+
+    # Sort the list by timings in descending order
+    timing_label_pairs.sort(reverse=True, key=lambda x: x[0])
+
+    # Now we plot in the sorted order and collect handles for the legend
+    handles = []
+    for total_build_time, guide in timing_label_pairs:
+        times = build_times[guide]
         sorted_items = sorted(times.items())
         versions = [item[0] for item in sorted_items]
         timings = [item[1] for item in sorted_items]
-
+        
         # Use the next color in the color list
-        plt.plot(versions, timings, marker='o', label=guide, color=combined_colors[color_index % len(combined_colors)])
+        handle, = plt.plot(versions, timings, marker='o', label=guide, color=combined_colors[color_index % len(combined_colors)])
+        handles.append(handle)
         color_index += 1
+
+    # Update the legend with the sorted handles
+    plt.legend(handles=handles, bbox_to_anchor=(1.05, 1), loc='upper left')
 
     plt.ylabel('Build Time (seconds)')  # Update label to reflect new units
     plt.xlabel('Version')
     plt.title('Build Time for each Implementation Guide by Version')
-    plt.legend(bbox_to_anchor=(1.05, 1), loc='upper left')
-    
+   
     # Set x-axis ticks to correspond to the actual versions present in the data
     plt.xticks(ticks=np.arange(len(sorted_versions)), labels=sorted_versions, rotation=90, fontsize=8)
 

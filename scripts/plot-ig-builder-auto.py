@@ -22,6 +22,8 @@ import matplotlib.pyplot as plt
 import requests
 import sys
 import os
+import numpy as np
+
 
 # Function to parse and sort version numbers
 def parse_version(version):
@@ -61,9 +63,6 @@ def main(source):
     # The latest version is the last one in the sorted list
     latest_version = sorted_versions[-1]
 
-    # ... [The script continues here. The rest of the script remains unchanged.]
-
-
     # Construct the filename using the version number
     filename = f"{latest_version}.png"
 
@@ -83,28 +82,34 @@ def main(source):
                 build_times[guide_name] = {}
             build_times[guide_name][version] = time
 
+    # Determine the number of unique guides to plot
+    num_guides = len(build_times)
+    # Create a color map
+    cmap = plt.get_cmap('nipy_spectral')
+    colors = [cmap(i) for i in np.linspace(0, 1, num_guides)]
+    # Assign a color to each guide
+    color_index = 0
+
     # Create the visualization
     for guide, times in build_times.items():
         sorted_items = sorted(times.items())
         versions = [item[0] for item in sorted_items]
         timings = [item[1] for item in sorted_items]
 
-        plt.plot(versions, timings, marker='o', label=guide)
+        # Use the next color in the color list
+        plt.plot(versions, timings, marker='o', label=guide, color=colors[color_index])
+        color_index += 1
 
     plt.ylabel('Build Time (seconds)')  # Update label to reflect new units
     plt.xlabel('Version')
     plt.title('Build Time for each Implementation Guide by Version')
     plt.legend(bbox_to_anchor=(1.05, 1), loc='upper left')
-    plt.xticks(rotation=45)
-    plt.tight_layout()
     
-    # NEW: Specify the directory and create it if it doesn't exist
-    # directory = "../data/publisher-build-time-trends"
-    # if not os.path.exists(directory):
-    #    os.makedirs(directory)
+    # Set x-axis ticks to correspond to the actual versions present in the data
+    plt.xticks(ticks=np.arange(len(sorted_versions)), labels=sorted_versions, rotation=90, fontsize=8)
 
-    # NEW: Modify the filename to include the directory path
-    # filename = os.path.join(directory, filename)
+    plt.gcf().set_size_inches(15, 6) # Set figure size
+    plt.tight_layout()
 
     # Save the figure
     plt.savefig(args.output)

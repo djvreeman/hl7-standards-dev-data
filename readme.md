@@ -11,6 +11,8 @@ github-release-json-to-csv.py
 
 parse-builds-web.py
 
+ [parse-jira-filter-export-csv-md.py](scripts/parse-jira-filter-export-csv-md.py) 
+
 parse-jiracommenters-unique-csv.py
 
 parse-jiraresolvedissues-csv-for-totals.py

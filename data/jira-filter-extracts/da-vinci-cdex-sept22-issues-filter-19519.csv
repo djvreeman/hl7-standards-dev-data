@@ -1,0 +1,153 @@
+Issue,Related URL,Resolution
+FHIR-38613,http://build.fhir.org/ig/HL7/davinci-ecdx/branches/Sept2022Ballot/security.html#purpose-of-use,see FHIR-38598
+FHIR-38612,http://build.fhir.org/ig/HL7/davinci-ecdx/branches/Sept2022Ballot/requesting-attachments.html#cdex-attachment-request-profile,"change:
+
+It constrains the Task resource to minimal necessary data elements needed to request attachments and is compliant with HIPAA Attachment rules for CMS and an alternative to the X12n 277 and 278 response transactions.
+
+to:
+
+It constrains the Task resource to minimal necessary data elements needed to request attachments and respond in a way that is compatible with existing X12 837 and 278 identifiers to allow for reassociation and requests for information using LOINC as the standard."
+FHIR-38605,http://build.fhir.org/ig/HL7/davinci-ecdx/branches/Sept2022Ballot/background.html#steps-1,"re: ""STU2 level of maturity, given STU1 was only published a few days prior to the public ballot period?""
+
+STU is a ballot grouping or sequence and not an indication of maturity.  We will add maturity level indicators (FMM) to the guide.
+
+ 
+
+re:  "" how Payer systems associate attachments to and processes the claim or prior authorization is out of scope""
+
+Clarify that the _process how to associate the information_ with the original Claim/PA is OOS, not the data needed for association which is documented in the IG."
+FHIR-38603,http://build.fhir.org/ig/HL7/davinci-ecdx/branches/Sept2022Ballot/solicited-unsolicited-attachments.html#unsolicited-attachments,"Delete
+
+""In all of these cases, the Payer will require a trading partner agreement for sending attachments based on predefined rules.""
+
+ 
+
+This statement is inaccurate and misleading."
+FHIR-38602,http://build.fhir.org/ig/HL7/davinci-ecdx/branches/Sept2022Ballot/task-based-approach.html#polling,"Change
+
+""Data Consumers *SHOULD* perform this operation in an automated/background manner no more than every 5 minutes for the first 30 minutes and no more frequently than once every hour after that.""
+
+to
+
+Data Consumers *SHOULD* perform this operation in an automated/background manner after 1 minute to return automated responses and after that no more than every 5 minutes for the first 30 minutes and no more frequently than once every hour after that.
+
+ 
+
+Note: find this same polling timing for PAS and update it to the language above."
+FHIR-38599,http://build.fhir.org/ig/HL7/davinci-ecdx/branches/Sept2022Ballot/task-based-approach.html#task-reason,"Change
+
+""When it is known,{{{}Task.reasonCode/reasonReference{}}} *SHOULD* reference the object that directly leads to the task - a particular claim for example.""
+
+to 
+
+""When it is known,{{{}Task.reasonCode/reasonReference{}}} *SHALL* reference the object that directly leads to the task - a particular claim for example.
+
+ "
+FHIR-38598,http://build.fhir.org/ig/HL7/davinci-ecdx/branches/Sept2022Ballot/task-based-approach.html#benefits,"Will update description to promote the benefit of being able to narrow the POU beyond TPO at the transaction level.
+
+ 
+
+However, in regards to  ""we would expect the purpose of use always be indicated for the task""
+
+Because this capability doesn’t really exist today – typically one overarching PoU defined at a business agreement level ( e.g. at app registration), we can't require it for every transaction. The current CDex design is flexible enough to support the current state of healthcare data _and_ _optionally_ _provide additional granularity to_ define _POU_ with a greater level of discrimination at the transaction level if and when it is implemented or required in the future.  
+
+ "
+FHIR-38595,http://build.fhir.org/ig/HL7/davinci-ecdx/branches/Sept2022Ballot/direct-query.html#scenario-1,"There are situations where information from prior coverages is required (e.g., continuity of care and quality measures) and the current IG requires both authorization and appropriate scopes."
+FHIR-38592,http://build.fhir.org/ig/HL7/davinci-ecdx/branches/Sept2022Ballot/direct-query.html#discovery-of-patient-fhir-ids,"See FHIR-38318
+
+(This tracker is a duplicate of applied issue FHIR-38318 but its status did not update properly to ""Applied"" in Jira.)"
+FHIR-38588,http://build.fhir.org/ig/HL7/davinci-ecdx/branches/Sept2022Ballot/background.html#actors-and-roles,Will remove the paragraph.
+FHIR-38585,http://build.fhir.org/ig/HL7/davinci-ecdx/branches/Sept2022Ballot/background.html#where-does-cdex-fit-in-the-da-vinci-project,"There will continue to be situations even with a fully implemented CRD and DTR system. (which will reduce practitioner burden through automation).  Another mechanism for requesting attachments will be needed for those cases that are not processed through a PAS end-to-end workflow or for when Providers miss or fail to submit requested documents.
+
+see attachment for updated guidance."
+FHIR-38578,http://build.fhir.org/ig/HL7/davinci-ecdx/branches/Sept2022Ballot/background.html,"Replace:
+
+""Payers also want to create a clinical record of their members to be able to reduce redundant care and make better medical treatment and care planning recommendations to providers.""
+
+With:
+
+""Payers may also collect this clinical information to assist providers with care planning options."""
+FHIR-38576,http://build.fhir.org/ig/HL7/davinci-ecdx/branches/Sept2022Ballot/index.html#about-this-guide,"Change
+
+""Like all Da Vinci Implementation Guides, it follows the [HL7 Da Vinci Guiding Principles|https://confluence.hl7.org/display/DVP/Da+Vinci+Clinical+Advisory+Council+Members?preview=/66940155/66942916/Guiding%20Principles%20for%20Da%20Vinci%20Implementation%20Guides.pdf] for the exchange of patient health information.""
+
+To
+
+""Like all Da Vinci Implementation Guides, it adheres to the [HL7 Da Vinci Guiding Principles|https://confluence.hl7.org/display/DVP/Da+Vinci+Clinical+Advisory+Council+Members?preview=/66940155/66942916/Guiding%20Principles%20for%20Da%20Vinci%20Implementation%20Guides.pdf] for the exchange of patient health information."""
+FHIR-38368,http://hl7.org/fhir/us/davinci-cdex/2022Sep/sending-attachments.html#example-signed-fhir-resource-attachments,removed '*' from button bar
+FHIR-38367,http://hl7.org/fhir/us/davinci-cdex/2022Sep/sending-attachments.html#rendered-documents-1,Correct rendering of CCDA as proposed
+FHIR-38366,http://hl7.org/fhir/us/davinci-cdex/2022Sep/OperationDefinition-submit-attachment.html,"Other Da Vinci IGs like CDex and HRex use CamelCase
+
+Other IG's like US Core or $validate uses ( kebab-case )
+
+Still other like $evaluate-measure uses pascalCase
+
+There is no consistency across FHIR for parameter styles nor are there any documented style guides for naming parameters (unlike for search parameters)"
+FHIR-38327,http://hl7.org/fhir/us/davinci-cdex/2022Sep/signatures.html#step-by-step-examples,Agree to add language as indicated
+FHIR-38326,http://hl7.org/fhir/us/davinci-cdex/2022Sep/sending-attachments.html#sending-attachments,"add to the first paragraph where it states:
+
+""This page documents a FHIR-based approach to sending attachments for claims or prior authorization directly to a Payer. This transaction is used for both _solicited_ and _unsolicited_ attachments. It is intended to be compatible with the [X12n 275 transaction|https://x12.org/products/transaction-sets].""
+
+The following:
+
+""Attachments must also be compatible with the X12 N 837I and 837P for claims purposes and the 278 response for authorizations. Compatibility assumes that the appropriate identifiers are supported in the submission to facilitate association of the attachment with the claim submission or authorization request.""
+
+ "
+FHIR-38325,http://hl7.org/fhir/us/davinci-cdex/2022Sep/task-based-approach.html#task-reason,duplicate
+FHIR-38287,http://hl7.org/fhir/us/davinci-cdex/2022Sep/requesting-attachments.html,Update Tables as proposed.
+FHIR-38286,http://hl7.org/fhir/us/davinci-cdex/2022Sep/security.html#purpose-of-use,"Change as proposed
+
+ "
+FHIR-38259,http://hl7.org/fhir/us/davinci-cdex/2022Sep/CodeSystem-cdex-temp.html,Will migrate as proposed.
+FHIR-38252,,"See FHIR-37738 , the US Core variance request,  for the rationale for not using the US Core Patient profile as a contained patient.  There is nothing prohibiting the contained patient from conforming to US Core Patient. "
+FHIR-38245,,"The attachments request is designed to be:
+ # compatible with x12 transactions (no explicit POU in the these transactions)
+ # the POU is implicit to be Payment related for a Pre-Auth or Claim. However, the attachments could also be used for other activities as well such as Quality Measures - in other words - Operations)
+
+Adding a POU input parameter as an optional element to the attachment profile would provide the same benefit of being able to narrow the POU beyond TPO on a per-transaction basis.
+
+Will add an _optional_ POU input parameter to the Attachment Profile as we did for the Task-based query profile."
+FHIR-38244,,Will clarify as proposed.
+FHIR-38243,,
+FHIR-38242,,Change as proposed
+FHIR-38241,,"Currently, Support X12 as a baseline capability using the request model of LOINC attachment codes and the provider can submit a CCDA or PDF back.
+
+ 
+We will align with DTR functionality and. provide the ability to address attachment data more precisely. CDex attachments will support the use of LOINC Document Type codes, particularly where X12 transactions are part of the interactions, and include the ability to use Questionnaire, CQL, and QuestionnaireResponse as supported by DTR when there is no transition into/out of X12 transactions in the interactions. This is achieved by including a URL to a FHIR Questionnaire in the request instead of a LOINC Document Type code. That approach will enable requests for very specific missing data, avoid a document format where not needed, yet still provides the ability to have a signature for the provider to attest to the content where that is required by a payer, which not all will require, nor require a document formatted attachment.
+Technically will add an element for a URL to a FHIR Questionnaire and the provider responds by submitting the completed QuestionnaireResponse.
+
+For Task-based queries it the same as above except the provider updates Task and references QuestionnaireResponse in the Task.output.
+ 
+(Use the extension [http://hl7.org/fhir/StructureDefinition/questionnaireresponse-signature] for signed responses)
+
+ 
+
+For high-level summary see attached"
+FHIR-38240,,update the text as proposed
+FHIR-38210,http://hl7.org/fhir/us/davinci-cdex/2022Sep/background.html#attachments-workflow,Update as proposed ( separate workflows )
+FHIR-38208,http://hl7.org/fhir/us/davinci-cdex/ImplementationGuide/hl7.fhir.us.davinci-cdex,This is a publishing issue and is a known issue that is currently being addressed by the publishing team.  Will follow up with ig-publishing team
+FHIR-38192,http://hl7.org/fhir/us/davinci-cdex/2022Sep/artifacts.html#behavior-capability-statements,"Will provide guidance on how the current approach can be implemented for either Prior Authorization Attachments, Claims Attachments, or both.
+
+ "
+FHIR-38191,http://hl7.org/fhir/us/davinci-cdex/2022Sep/StructureDefinition-cdex-task-attachment-request.html,"Will change date of service min = 0 and provide similar guidance as in $submit-attachment and a formal constraint to require if a claim.
+
+$submit-attachment operation comment:
+{quote}Date of service or starting date of the service for the claim or prior authorization. This parameter *SHALL* be present and precise to the day if the attachment is for a claim. It is optional if the attachment is for prior authorization. This is assumed to be known by the provider when submitting _unsolicited_ attachments. For _solicited_ attachments this value is communicated to the provider through the request
+{quote}"
+FHIR-38189,http://hl7.org/fhir/us/davinci-cdex/2022Sep/OperationDefinition-submit-attachment.html#submitattachment,"# Update operation to require at least a provider or organization ID (technically this means each parameter is min = 0 and will document that at least one is required).
+ # The second issue is to resolve any ambiguity if a request is sent to a common endpoint for more than a single organization where a  practitioner could belong to more than one organization.   We will update both Task profile's .owner element to add a choice of a reference to PractitionerRole - which contains both organization and practitioner (technically add a choice of a reference to a _contained_ PractitionerRole composed of a reference identifier to both organization and practitioner)
+
+!image-2022-11-07-20-30-11-195.png!"
+FHIR-38188,,"The requirement for signatures does not come from CDex, it comes from payers. CDex defines how the technical requirements are met.  The issues surrounding whether signatures are necessary/appropriate/useful are out of scope.
+
+we will not explicitly discourage their use
+
+However, we will clarify that the inclusion of signature specification does not advocate for their use: 
+
+""The IG specification supports the transmission of signatures if business agreement requires them but does not require them."""
+FHIR-38146,,
+FHIR-38144,,Clarify use of data tagging as proposed in  FHIR-38286 
+FHIR-38142,,"See FHIR-38598
+
+Will Roll up the VS into one or more TPO concepts"
+FHIR-38070,http://hl7.org/fhir/us/davinci-cdex/2022Sep/StructureDefinition-cdex-task-attachment-request.html,

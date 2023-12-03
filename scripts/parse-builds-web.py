@@ -39,7 +39,7 @@ def parse_json_and_write_csv(output_file):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Fetch JSON from URL and write to CSV.')
-    parser.add_argument('-o', '--output', required=True, help='Path to the output CSV file.')
+    parser.add_argument('-o', '--output', default='../data/builds/build-repos.csv', help='Path to the output CSV file.')
 
     args = parser.parse_args()
 

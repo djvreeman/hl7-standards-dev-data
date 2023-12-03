@@ -1,6 +1,7 @@
 # HL7 Data Gathering Scripts
 
-standups.hl7.org-json-to-csv.py
+
+fetch-parse-fhir-ig-list-and-all-editions-onecsv.py
 
 fhir-ecosystem-json-parser.py
 
@@ -8,11 +9,17 @@ github-release-csv-cleanup.py
 
 github-release-json-to-csv.py
 
+parse-builds-web.py
+
 parse-jiracommenters-unique-csv.py
 
 parse-jiraresolvedissues-csv-for-totals.py
 
-parse-builds-web.py
+parse-package-list-json-to-csv.py
+
+plot-ig-builder-auto-dynamic.py
+
+standups.hl7.org-json-to-csv.py
 
 # Dependencies
 Python3

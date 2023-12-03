@@ -18,7 +18,7 @@ Some HL7 JIRA Fields of Note:
 
 Example Usage:
 1. Export data to both CSV and Markdown with default output filenames:
-   python parse-jira-filter-export-csv.py -f '{"jql": "filter = 16107"}' -t 'your_bearer_token' -d 'key,fields.customfield_10612,fields.customfield_10618'
+   python parse-jira-filter-export-csv.py -f '{"jql": "filter = 16107"}' -t 'your_bearer_token' -d 'key,fields.customfield_10612,fields.customfield_10618' -e 'both'
 
 2. Export data only to CSV with a custom output filename:
    python parse-jira-filter-export-csv.py -f '{"jql": "filter = 16107"}' -t 'your_bearer_token' -d 'key,fields.customfield_10612,fields.customfield_10618' -o "da-vinci-formulary-stu2-issues-filter-16017" -e 'csv'

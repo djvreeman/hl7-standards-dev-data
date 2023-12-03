@@ -1,3 +1,32 @@
+#!/usr/local/bin/python3
+# -*- coding: utf-8 -*-
+
+"""
+Script Description:
+This script interacts with the HL7 JIRA API to fetch issue data based on specified query parameters.
+It allows for exporting the retrieved data into either CSV, Markdown format, or both. The script
+supports pagination to handle large datasets and exports fields as specified in the command-line
+arguments. Additional features include formatting specific fields like URLs and JIRA keys as clickable
+links in the Markdown output.
+
+Authorization: You need to supply your HL7 Jira Personalized Access Token as the bearer token.
+You can create/find your Personalized Access Token in your JIRA Profile.
+
+Some HL7 JIRA Fields of Note:
+    fields.customfield_10612 = Related URL
+    fields.customfield_10618 = Resolution
+
+Example Usage:
+1. Export data to both CSV and Markdown with default output filenames:
+   python parse-jira-filter-export-csv.py -f '{"jql": "filter = 16107"}' -t 'your_bearer_token' -d 'key,fields.customfield_10612,fields.customfield_10618'
+
+2. Export data only to CSV with a custom output filename:
+   python parse-jira-filter-export-csv.py -f '{"jql": "filter = 16107"}' -t 'your_bearer_token' -d 'key,fields.customfield_10612,fields.customfield_10618' -o "da-vinci-formulary-stu2-issues-filter-16017" -e 'csv'
+
+3. Export data only to Markdown:
+   python parse-jira-filter-export-csv.py -f '{"jql": "filter = 16107"}' -t 'your_bearer_token' -d 'key,fields.customfield_10612,fields.customfield_10618' -o "da-vinci-formulary-stu2-issues-filter-16017" -e 'markdown'
+"""
+
 import argparse
 import csv
 import requests
@@ -84,6 +113,7 @@ def sanitize_for_markdown(text):
 
 
 def export_to_csv(data, fields, filename, field_mappings):
+    row_count = 0
     with open(f"{filename}.csv", 'w', newline='', encoding='utf-8') as file:
         mapped_fields = [field_mappings.get(field, field) for field in fields]
         writer = csv.DictWriter(file, fieldnames=mapped_fields, quoting=csv.QUOTE_MINIMAL)
@@ -91,8 +121,11 @@ def export_to_csv(data, fields, filename, field_mappings):
         for item in data:
             row_data = {field_mappings.get(field, field): get_nested_value(item, field) for field in fields}
             writer.writerow(row_data)
+            row_count += 1
+    return row_count
 
 def export_to_markdown(data, fields, filename, field_mappings):
+    row_count = 0
     with open(f"{filename}.md", 'w', encoding='utf-8') as file:
         mapped_fields = [field_mappings.get(field, field) for field in fields]
         file.write('| ' + ' | '.join(mapped_fields) + ' |\n')
@@ -111,6 +144,8 @@ def export_to_markdown(data, fields, filename, field_mappings):
                     value = sanitize_for_markdown(value)
                 row_data.append(value)
             file.write('| ' + ' | '.join(row_data) + ' |\n')
+            row_count += 1
+    return row_count
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Query JIRA API and export specified fields to CSV and Markdown.")
@@ -119,6 +154,10 @@ if __name__ == "__main__":
     parser.add_argument("-t", "--token", help="Bearer token for authentication", required=True)
     parser.add_argument("-d", "--fields", help="Comma-separated data fields to export", required=True)
     parser.add_argument("-o", "--output", help="Output file name (without extension)", default=DEFAULT_OUTPUT_FILENAME)
+    parser.add_argument("-e", "--export-format", 
+                    help="Specify the export format: 'csv', 'markdown', or 'both'", 
+                    choices=['csv', 'markdown', 'both'], 
+                    default='both')
 
     args = parser.parse_args()
 
@@ -134,9 +173,13 @@ if __name__ == "__main__":
             print("No issues found.")
             sys.exit(1)
 
-        export_to_csv(data_to_export, fields, args.output, field_mappings)
-        export_to_markdown(data_to_export, fields, args.output, field_mappings)
+    # Determine the export format
+        if args.export_format in ['csv', 'both']:
+                csv_row_count = export_to_csv(data_to_export, fields, args.output, field_mappings)
+                print(f"Data exported to CSV successfully with {csv_row_count} rows in file: {args.output}.csv")
 
-        print(f"Data exported to CSV and Markdown successfully in files: {args.output}.csv and {args.output}.md")
+        if args.export_format in ['markdown', 'both']:
+            md_row_count = export_to_markdown(data_to_export, fields, args.output, field_mappings)
+            print(f"Data exported to Markdown successfully with {md_row_count} rows in file: {args.output}.md")
     except Exception as e:
-        print(f"An error occurred: {e}")
+            print(f"An error occurred: {e}")

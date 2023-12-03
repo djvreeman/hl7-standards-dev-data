@@ -1,4 +1,4 @@
-Ticket,Related URL,Resolution
+Issue,Related URL,Resolution
 FHIR-34283,https://build.fhir.org/ig/HL7/davinci-pdex-formulary/ValueSet-SemanticDrugVS.html#logical-definition-cld,Retracted by submitter
 FHIR-34085,,"Create ValueSet Sementic Drug Codes for RxNorm codes that are of Term Type (TTY) SCD, SBD, GPCK, and BPCK
 

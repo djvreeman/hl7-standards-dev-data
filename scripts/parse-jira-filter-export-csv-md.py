@@ -38,7 +38,7 @@ DEFAULT_OUTPUT_FILENAME = "output"
 
 # Output field mappings
 field_mappings = {
-    'key': 'Ticket',
+    'key': 'Issue',
     'fields.customfield_10612': 'Related URL',
     'fields.customfield_10618': 'Resolution',
     # Add more mappings as needed

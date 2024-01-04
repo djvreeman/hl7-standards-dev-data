@@ -7,12 +7,16 @@
 # hooked up to the pipeline.
 
 # Usage:
-# python3 parse-builds-web.py -o ../data/builds/build-repos.csv
-
+# python3 scripts/parse-builds-web.py -o data/working/builds/build-repos.csv
 
 import csv
 import argparse
 import requests
+import datetime
+
+# Format current date and time as YYYYMMDD-HHMMSS
+current_time = datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
+
 
 def parse_json_and_write_csv(output_file):
     # Fetch the JSON data from the URL
@@ -39,7 +43,7 @@ def parse_json_and_write_csv(output_file):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Fetch JSON from URL and write to CSV.')
-    parser.add_argument('-o', '--output', default='../data/builds/build-repos.csv', help='Path to the output CSV file.')
+    parser.add_argument('-o', '--output', default=f"data/working/builds/{current_time}-build-repos.csv", help='Path to the output CSV file.')
 
     args = parser.parse_args()
 

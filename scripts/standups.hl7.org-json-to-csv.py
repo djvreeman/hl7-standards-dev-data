@@ -6,7 +6,7 @@
 # This simple script calls the standups.hl7.org json API and returns a cleaned-up csv file.
 #
 # Example usage:
-# python3 standups.hl7.org-json-to-csv.py -p 1
+# python3 standups.hl7.org-json-to-csv.py -p 4
 
 
 try:
@@ -24,13 +24,18 @@ import sys
 import urllib
 import argparse
 import getpass
-from datetime import datetime
+import datetime
+
+# Format current date and time as YYYYMMDD-HHMMSS
+current_time = datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
 
 # Get Command Line Arguments
-
 parser = argparse.ArgumentParser(
     formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 parser.add_argument("-p", help="enter page of search results", default="1")
+# Adding '-o' argument for output filename
+parser.add_argument('-o', '--output', type=str, default=f"data/working/standups.hl7.org/{current_time}_standups.hl7.org.csv", help='The output CSV file name')
+    
 args = parser.parse_args()
 password = getpass.getpass("Remote Password (or skip for no auth): ")
 
@@ -38,14 +43,12 @@ password = getpass.getpass("Remote Password (or skip for no auth): ")
 server = "http://standups.hl7.org/wp-json/wp/v2/posts"
 page = args.p
 params = "?_fields=title,date&per_page=100&order=asc&page="
-dataOutput = "../data/standups.hl7.org/standups.hl7.org" + page + ".csv"
+dataOutput = "data/working/standups.hl7.org/standups.hl7.org" + page + ".csv"
 fhirHeader = {}
 #fhirHeader['Content-Type'] = "application/fhir+json;charset=utf-8"
 
 serverUrl = server + '/' + params + page 
 print(serverUrl)
-
-# Lets get the Valueset (expecting JSON from the server)
 
 # create an authorization handler if needed
 
@@ -64,12 +67,12 @@ else:
 
 dataJSON = json.loads(r.read().decode(r.info().get_param('charset') or 'utf-8'))
 
-with open(dataOutput, mode='w') as csv_file:
+with open(args.output, mode='w') as csv_file:
     csvWriter = csv.writer(csv_file, quoting=csv.QUOTE_ALL)
     for spec in dataJSON:
         try: 
             specDate = spec["date"]
-            datetimeobj=datetime.strptime(specDate, "%Y-%m-%dT%H:%M:%S")
+            datetimeobj=datetime.datetime.strptime(specDate, "%Y-%m-%dT%H:%M:%S")
             simpleDate = datetimeobj.date()
             simpleDateMonth = simpleDate.strftime('%Y %m')
             #print (simpleDateMonth)

@@ -15,7 +15,7 @@ import getopt
 from datetime import datetime
 from collections import defaultdict
 
-# Function to convert a csv file to a list of dictionaries.  Takes in one variable called variables_file
+# Function to convert a csv file to a list of dictionaries. Takes in one variable called variables_file
 def csvDictList(variables_file):
      
     # Open variable-based csv, iterate over the rows and map values to a list of dictionaries containing key/value pairs
@@ -25,16 +25,24 @@ def csvDictList(variables_file):
         dict_list.append(line)
     return dict_list
 
-#Get Command Line Arguments
+# Get Command Line Arguments
 parser = argparse.ArgumentParser()
 parser.add_argument("-i", help="file name of input CSV file", required=True)
-parser.add_argument("-o", help="file name of output CSV file", required=True)
-
+parser.add_argument("-o", "--output", type=str, required=False, help="Output CSV file")
 args = parser.parse_args()
+
+# If no output file is provided, append '-parsed' before the file extension of the input file
+if not args.output:
+    input_file = args.i
+    if '.' in input_file:
+        file_base, file_extension = input_file.rsplit('.', 1)
+        args.output = f"{file_base}-parsed.{file_extension}"
+    else:
+        args.output = f"{input_file}-parsed"
 
 # Setup file names 
 csvInputFileName = args.i
-csvOutputFileName = args.o
+csvOutputFileName = args.output
 
 # Calls the csv_dict_list function, passing the named csv
 data = csvDictList(csvInputFileName)
@@ -48,28 +56,12 @@ with open(csvOutputFileName, mode='w') as csv_file:
     resolvedTotals = defaultdict(int)
     for issue in data:
         try: 
-            #pprint.pprint(data)
-            #issueDate = issue["date"]
             fullResolved = issue.get("Resolved")
             simpleResolved = datetime.strptime(fullResolved, "%Y-%m-%d %H:%M")
             simpleDate = simpleResolved.date()
             resolvedDay = simpleDate.strftime('%Y %m %d')
-            # print (resolvedDay)
             resolvedTotals[resolvedDay] += 1
-            #datetimeobj=datetime.strptime(issueDate, "%Y-%m-%dT%H:%M:%S")
-            #simpleDate = datetimeobj.date()
-            #simpleDateMonth = simpleDate.strftime('%Y %m')
-            #print (simpleissueName)
-
-            #csvWriter.writerow([simpleDateMonth,issueDate,simpleDate,issueName,simpleissueName,family])
         except:
-            #issueDate = issue["date"]
-            #issueName = issue["title"]["rendered"]
-            #csvWriter.writerow([issueDate,issueName])
             exit
-    #print(str(dict(resolvedTotals)))
     for k,v in resolvedTotals.items():
-        #print (k) 
-        # print (resolvedTotals[k])
         csvWriter.writerow([k,resolvedTotals[k]])
-    

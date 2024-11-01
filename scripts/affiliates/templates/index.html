@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Affiliate Membership Data Collection</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <h1>Affiliate Membership Data Collection</h1>
+    <p><a href="{{ url_for('add_affiliate') }}">Add Affiliate</a></p>
+    <p><a href="{{ url_for('add_membership') }}">Add Membership Data</a></p>
+    <p><a href="{{ url_for('view_affiliates') }}">View Affiliates</a></p>
+    <p><a href="{{ url_for('view_membership') }}">View Membership Data</a></p>
+
+    <h2>Yearly Membership Totals</h2>
+    <table>
+        <tr>
+            <th>Year</th>
+            <th>Total Org Members</th>
+            <th>Total Individual Members</th>
+            <th>Total Affiliates</th>
+        </tr>
+        {% for total in yearly_totals %}
+        <tr>
+            <td>{{ total['Year'] }}</td>
+            <td>{{ total['Org_Member_Count'] }}</td>
+            <td>{{ total['Ind_Member_Count'] }}</td>
+            <td>{{ total['Affiliate_Count'] }}</td>
+        </tr>
+        {% endfor %}
+    </table>
+</body>
+</html>

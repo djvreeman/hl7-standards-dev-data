@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Add Affiliate</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <h1>Add Affiliate</h1>
+    <form action="{{ url_for('add_affiliate') }}" method="post">
+        <label for="affiliate_id">Affiliate ID:</label>
+        <input type="text" id="affiliate_id" name="affiliate_id" required><br><br>
+        <label for="affiliate_name">Affiliate Name:</label>
+        <input type="text" id="affiliate_name" name="affiliate_name" required><br><br>
+        <label for="country">Country:</label>
+        <input type="text" id="country" name="country" required><br><br>
+        <label for="year_active">Year Active:</label>
+        <input type="text" id="year_active" name="year_active" required><br><br>
+        <input type="submit" value="Add Affiliate">
+    </form>
+    <p><a href="{{ url_for('index') }}">Back to Home</a></p>
+</body>
+</html>

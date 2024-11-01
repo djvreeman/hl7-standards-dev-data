@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <title>View Affiliates</title>
+</head>
+<body>
+    <h1>Affiliate Registry</h1>
+    <table>
+        <tr><th>Affiliate ID</th><th>Affiliate Name</th><th>Country</th><th>Year Active</th><th>Actions</th></tr>
+        {% for affiliate in affiliates %}
+        <tr>
+            <td>{{ affiliate['Affiliate_ID'] }}</td>
+            <td>{{ affiliate['Affiliate_Name'] }}</td>
+            <td>{{ affiliate['Country'] }}</td>
+            <td>{{ affiliate['Year_Active'] }}</td>
+            <td><a href="{{ url_for('edit_affiliate', affiliate_id=affiliate['Affiliate_ID']) }}">Edit</a></td>
+        </tr>
+        {% endfor %}
+    </table>
+    <a href="{{ url_for('index') }}">Back to Home</a>
+</body>
+</html>

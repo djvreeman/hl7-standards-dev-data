@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Add Membership Data</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <h1>Add Membership Data</h1>
+    <form action="{{ url_for('add_membership') }}" method="post">
+        <label for="affiliate_id">Affiliate ID:</label>
+        <input type="text" id="affiliate_id" name="affiliate_id" required><br><br>
+        <label for="year">Year:</label>
+        <input type="text" id="year" name="year" required><br><br>
+        <label for="org_member_count">Org Member Count:</label>
+        <input type="number" id="org_member_count" name="org_member_count" required><br><br>
+        <label for="ind_member_count">Ind Member Count:</label>
+        <input type="number" id="ind_member_count" name="ind_member_count" required><br><br>
+        <input type="submit" value="Add Membership Data">
+    </form>
+    <p><a href="{{ url_for('index') }}">Back to Home</a></p>
+</body>
+</html>

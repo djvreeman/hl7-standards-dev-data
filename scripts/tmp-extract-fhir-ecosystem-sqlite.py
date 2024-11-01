@@ -5,6 +5,9 @@ import argparse
 import os
 import certifi
 
+# Example usage:
+# python3 scripts/extract-fhir-ecosystem-sqlite.py -i https://fhir.org/guides/stats/xig.db -o data/working/fhir-ecosystem-csv/2024\ 04\ 09\ -\ xig2.db -f data/working/fhir-ecosystem-csv/20240409
+
 def download_database(url, local_db_path):
     response = requests.get(url, verify=certifi.where())
     with open(local_db_path, 'wb') as file:

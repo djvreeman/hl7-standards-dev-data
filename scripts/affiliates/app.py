@@ -42,28 +42,33 @@ def index():
 # Route to add an affiliate
 @app.route('/add_affiliate', methods=['GET', 'POST'])
 def add_affiliate():
+    # Load affiliate data
+    affiliates_df = pd.read_csv(affiliate_registry_file)
+    affiliates = affiliates_df.to_dict(orient='records')
+
     if request.method == 'POST':
-        affiliate_id = request.form['affiliate_id']
-        affiliate_name = request.form['affiliate_name']
-        country = request.form['country']
-        year_active = request.form['year_active']
-        df = pd.read_csv(affiliate_registry_file)
+        # Retrieve form data
+        affiliate_id = request.form.get('affiliate_id')
+        affiliate_name = request.form.get('affiliate_name')
+        country = request.form.get('country')
+        year_active = request.form.get('year_active')
 
-        if affiliate_id in df['Affiliate_ID'].values:
-            flash("Affiliate ID already exists!", "error")
-            return redirect(url_for('add_affiliate'))
-
+        # Save the affiliate data
         new_row = pd.DataFrame([{
             'Affiliate_ID': affiliate_id,
             'Affiliate_Name': affiliate_name,
             'Country': country,
             'Year_Active': year_active
         }])
-        df = pd.concat([df, new_row], ignore_index=True)
-        df.to_csv(affiliate_registry_file, index=False)
+        
+        # Append and save to CSV
+        affiliates_df = pd.concat([affiliates_df, new_row], ignore_index=True)
+        affiliates_df.to_csv(affiliate_registry_file, index=False)
+        
         flash("Affiliate added successfully!", "success")
         return redirect(url_for('index'))
-    return render_template('add_affiliate.html')
+    
+    return render_template('add_affiliate.html', affiliates=affiliates)
 
 # Route to edit an affiliate
 @app.route('/edit_affiliate/<affiliate_id>', methods=['GET', 'POST'])
@@ -101,58 +106,73 @@ def edit_affiliate(affiliate_id):
 # Route to add membership data
 @app.route('/add_membership', methods=['GET', 'POST'])
 def add_membership():
-    affiliates = pd.read_csv(affiliate_registry_file)['Affiliate_ID'].tolist()
+    # Load affiliate data
+    affiliates_df = pd.read_csv(affiliate_registry_file)
+    affiliates = affiliates_df.to_dict(orient='records')
 
     if request.method == 'POST':
-        affiliate_id = request.form['affiliate_id']
-        year = request.form['year']
-        org_member_count = request.form['org_member_count']
-        ind_member_count = request.form['ind_member_count']
+        # Retrieve form data
+        affiliate_id = request.form.get('affiliate_id')
+        year = request.form.get('year')
+        org_member_count = int(request.form.get('org_member_count'))
+        ind_member_count = int(request.form.get('ind_member_count'))
+        
+        # Calculate total member count
+        total_member_count = org_member_count + ind_member_count
+        print(f"Total Member Count calculated: {total_member_count}")  # Debugging
 
-        if affiliate_id not in affiliates:
-            flash("Affiliate ID does not exist!", "error")
-            return redirect(url_for('add_membership'))
-
+        # Save the membership data with total count
         df = pd.read_csv(membership_data_file)
         new_row = pd.DataFrame([{
             'Affiliate_ID': affiliate_id,
             'Year': year,
-            'Org_Member_Count': int(org_member_count),
-            'Ind_Member_Count': int(ind_member_count)
+            'Org_Member_Count': org_member_count,
+            'Ind_Member_Count': ind_member_count,
+            'Total_Member_Count': total_member_count  # Save total count
         }])
+        
+        # Concatenate the new row and save back to CSV
         df = pd.concat([df, new_row], ignore_index=True)
         df.to_csv(membership_data_file, index=False)
+        
         flash("Membership data added successfully!", "success")
         return redirect(url_for('index'))
+
     return render_template('add_membership.html', affiliates=affiliates)
 
 # Route to edit membership data
 @app.route('/edit_membership/<affiliate_id>/<year>', methods=['GET', 'POST'])
 def edit_membership(affiliate_id, year):
-    print(f"Accessed edit_membership with Affiliate ID: {affiliate_id} and Year: {year}")  # Debugging statement
+    # Load data and ensure columns are treated as strings
+    affiliates_df = pd.read_csv(affiliate_registry_file, dtype={'Affiliate_ID': str})
+    membership_df = pd.read_csv(membership_data_file, dtype={'Affiliate_ID': str, 'Year': str})
 
-    # Read the CSV file and ensure both affiliate_id and year are treated as strings
-    df = pd.read_csv(membership_data_file, dtype={'Affiliate_ID': str, 'Year': str})
-    print(f"Current DataFrame:\n{df}")  # Debugging statement to print the entire DataFrame
-
-    # Filter DataFrame to find the specified membership record
-    record = df[(df['Affiliate_ID'] == str(affiliate_id)) & (df['Year'] == str(year))]
-    print(f"Filtered DataFrame for affiliate_id {affiliate_id} and year {year}:\n{record}")  # Debugging statement
-
-    # Check if the membership record exists
+    # Merge to include affiliate names
+    merged_df = membership_df.merge(affiliates_df[['Affiliate_ID', 'Affiliate_Name']], on='Affiliate_ID', how='left')
+    
+    # Find the specific record for editing
+    record = merged_df[(merged_df['Affiliate_ID'] == affiliate_id) & (merged_df['Year'] == year)]
+    
     if record.empty:
-        print("Membership record not found!")  # Debugging statement
         flash("Membership record not found!", "error")
         return redirect(url_for('view_membership'))
 
+    # Extract the record and calculate Total Member Count for initial display
     record = record.iloc[0].to_dict()
-    print(f"Membership data for editing: {record}")  # Debugging statement
+    record['Total_Member_Count'] = record['Org_Member_Count'] + record['Ind_Member_Count']
 
     if request.method == 'POST':
-        # Update the DataFrame with the new values
-        df.loc[(df['Affiliate_ID'] == str(affiliate_id)) & (df['Year'] == str(year)), 'Org_Member_Count'] = request.form['org_member_count']
-        df.loc[(df['Affiliate_ID'] == str(affiliate_id)) & (df['Year'] == str(year)), 'Ind_Member_Count'] = request.form['ind_member_count']
-        df.to_csv(membership_data_file, index=False)
+        # Retrieve updated counts from the form
+        org_member_count = int(request.form.get('org_member_count'))
+        ind_member_count = int(request.form.get('ind_member_count'))
+        total_member_count = org_member_count + ind_member_count
+
+        # Update values in the original membership DataFrame
+        membership_df.loc[(membership_df['Affiliate_ID'] == affiliate_id) & (membership_df['Year'] == year), 'Org_Member_Count'] = org_member_count
+        membership_df.loc[(membership_df['Affiliate_ID'] == affiliate_id) & (membership_df['Year'] == year), 'Ind_Member_Count'] = ind_member_count
+        membership_df.loc[(membership_df['Affiliate_ID'] == affiliate_id) & (membership_df['Year'] == year), 'Total_Member_Count'] = total_member_count
+        membership_df.to_csv(membership_data_file, index=False)
+        
         flash("Membership data updated successfully!", "success")
         return redirect(url_for('view_membership'))
     
@@ -168,9 +188,17 @@ def view_affiliates():
 # Route to view membership data
 @app.route('/view_membership')
 def view_membership():
-    membership = pd.read_csv(membership_data_file)
-    print(f"Viewing Membership Data: {membership.to_dict(orient='records')}")  # Debugging statement
-    return render_template('view_membership.html', membership=membership.to_dict(orient='records'))
+    # Load and merge data
+    affiliates_df = pd.read_csv(affiliate_registry_file)
+    membership_df = pd.read_csv(membership_data_file)
+    
+    # Merge to include affiliate names and calculate Total_Member_Count
+    membership_df['Total_Member_Count'] = membership_df['Org_Member_Count'] + membership_df['Ind_Member_Count']
+    merged_df = membership_df.merge(affiliates_df[['Affiliate_ID', 'Affiliate_Name']], on='Affiliate_ID', how='left')
 
+    # Convert merged DataFrame to a list of dictionaries
+    membership = merged_df.to_dict(orient='records')
+    
+    return render_template('view_membership.html', membership=membership)
 if __name__ == '__main__':
     app.run(debug=True, port=5001)

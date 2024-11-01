@@ -2,26 +2,33 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
     <title>View Membership Data</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
     <h1>Membership Data</h1>
     <table>
         <tr>
             <th>Affiliate ID</th>
+            <th>Affiliate Name</th>
             <th>Year</th>
             <th>Org Member Count</th>
             <th>Ind Member Count</th>
+            <th>Total Member Count</th>
             <th>Actions</th>
         </tr>
         {% for record in membership %}
         <tr>
             <td>{{ record['Affiliate_ID'] }}</td>
+            <td>{{ record['Affiliate_Name'] }}</td>
             <td>{{ record['Year'] }}</td>
             <td>{{ record['Org_Member_Count'] }}</td>
             <td>{{ record['Ind_Member_Count'] }}</td>
-            <td><a href="{{ url_for('edit_membership', affiliate_id=record['Affiliate_ID'], year=record['Year']) }}">Edit</a></td>
+            <td>{{ record['Total_Member_Count'] }}</td>
+            <td>
+                <!-- Direct link to edit the membership record -->
+                <a href="{{ url_for('edit_membership', affiliate_id=record['Affiliate_ID'], year=record['Year']) }}">Edit</a>
+            </td>
         </tr>
         {% endfor %}
     </table>

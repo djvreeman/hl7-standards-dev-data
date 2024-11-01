@@ -8,16 +8,58 @@
 <body>
     <h1>Add Membership Data</h1>
     <form action="{{ url_for('add_membership') }}" method="post">
-        <label for="affiliate_id">Affiliate ID:</label>
-        <input type="text" id="affiliate_id" name="affiliate_id" required><br><br>
         <label for="year">Year:</label>
         <input type="text" id="year" name="year" required><br><br>
+
+        <label for="affiliate_id">Affiliate ID:</label>
+        <input type="text" id="affiliate_id" name="affiliate_id" required><br><br>
+
+        <label for="affiliate_name">Affiliate Name:</label>
+        <select id="affiliate_name" onchange="setAffiliateData()">
+            <option value="">-- Select an Affiliate --</option>
+            {% for affiliate in affiliates %}
+            <option value="{{ affiliate['Affiliate_ID'] }}" data-country="{{ affiliate['Country'] }}" data-id="{{ affiliate['Affiliate_ID'] }}">
+                {{ affiliate['Affiliate_Name'] }}
+            </option>
+            {% endfor %}
+        </select><br><br>
+
+        <label for="country">Country:</label>
+        <input type="text" id="country" name="country" required><br><br>
+
         <label for="org_member_count">Org Member Count:</label>
         <input type="number" id="org_member_count" name="org_member_count" required><br><br>
+
         <label for="ind_member_count">Ind Member Count:</label>
         <input type="number" id="ind_member_count" name="ind_member_count" required><br><br>
+
+        <label for="total_member_count">Total Member Count:</label>
+        <input type="number" id="total_member_count" name="total_member_count" readonly><br><br>
+
         <input type="submit" value="Add Membership Data">
     </form>
-    <p><a href="{{ url_for('index') }}">Back to Home</a></p>
+    <a href="{{ url_for('index') }}">Back to Home</a>
+
+    <script>
+        // Populate affiliate ID and country when an affiliate name is selected
+        function setAffiliateData() {
+            const selectedOption = document.getElementById('affiliate_name').selectedOptions[0];
+            const affiliateId = selectedOption.getAttribute('data-id');
+            const country = selectedOption.getAttribute('data-country');
+
+            document.getElementById('affiliate_id').value = affiliateId;
+            document.getElementById('country').value = country;
+        }
+
+        // Calculate total member count when counts are updated
+        document.getElementById('org_member_count').addEventListener('input', calculateTotal);
+        document.getElementById('ind_member_count').addEventListener('input', calculateTotal);
+
+        function calculateTotal() {
+            const orgCount = parseInt(document.getElementById('org_member_count').value) || 0;
+            const indCount = parseInt(document.getElementById('ind_member_count').value) || 0;
+            document.getElementById('total_member_count').value = orgCount + indCount;
+        }
+    </script>
 </body>
 </html>

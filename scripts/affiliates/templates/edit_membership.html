@@ -11,6 +11,9 @@
         <label for="affiliate_id">Affiliate ID:</label>
         <input type="text" id="affiliate_id" name="affiliate_id" value="{{ record['Affiliate_ID'] }}" readonly><br><br>
 
+        <label for="affiliate_name">Affiliate Name:</label>
+        <input type="text" id="affiliate_name" name="affiliate_name" value="{{ record['Affiliate_Name'] }}" readonly><br><br>
+
         <label for="year">Year:</label>
         <input type="text" id="year" name="year" value="{{ record['Year'] }}" readonly><br><br>
 
@@ -20,8 +23,23 @@
         <label for="ind_member_count">Ind Member Count:</label>
         <input type="number" id="ind_member_count" name="ind_member_count" value="{{ record['Ind_Member_Count'] }}" required><br><br>
 
+        <label for="total_member_count">Total Member Count:</label>
+        <input type="number" id="total_member_count" name="total_member_count" value="{{ record['Total_Member_Count'] }}" readonly><br><br>
+
         <input type="submit" value="Update Membership Data">
     </form>
     <a href="{{ url_for('view_membership') }}">Back to Membership Data</a>
+
+    <script>
+        // Automatically calculate total member count when counts are updated
+        document.getElementById('org_member_count').addEventListener('input', calculateTotal);
+        document.getElementById('ind_member_count').addEventListener('input', calculateTotal);
+
+        function calculateTotal() {
+            const orgCount = parseInt(document.getElementById('org_member_count').value) || 0;
+            const indCount = parseInt(document.getElementById('ind_member_count').value) || 0;
+            document.getElementById('total_member_count').value = orgCount + indCount;
+        }
+    </script>
 </body>
 </html>

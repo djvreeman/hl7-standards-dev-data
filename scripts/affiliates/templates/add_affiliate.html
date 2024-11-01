@@ -8,16 +8,44 @@
 <body>
     <h1>Add Affiliate</h1>
     <form action="{{ url_for('add_affiliate') }}" method="post">
-        <label for="affiliate_id">Affiliate ID:</label>
-        <input type="text" id="affiliate_id" name="affiliate_id" required><br><br>
+        <label for="existing_affiliate">Select Existing Affiliate:</label>
+        <select id="existing_affiliate" onchange="populateFields()">
+            <option value="">-- Select an Affiliate --</option>
+            {% for affiliate in affiliates %}
+            <option value="{{ affiliate['Affiliate_ID'] }}" data-country="{{ affiliate['Country'] }}" data-id="{{ affiliate['Affiliate_ID'] }}">
+                {{ affiliate['Affiliate_Name'] }}
+            </option>
+            {% endfor %}
+        </select><br><br>
+
         <label for="affiliate_name">Affiliate Name:</label>
         <input type="text" id="affiliate_name" name="affiliate_name" required><br><br>
+
+        <label for="affiliate_id">Affiliate ID:</label>
+        <input type="text" id="affiliate_id" name="affiliate_id" required><br><br>
+
         <label for="country">Country:</label>
         <input type="text" id="country" name="country" required><br><br>
+
         <label for="year_active">Year Active:</label>
         <input type="text" id="year_active" name="year_active" required><br><br>
+
         <input type="submit" value="Add Affiliate">
     </form>
-    <p><a href="{{ url_for('index') }}">Back to Home</a></p>
+    <a href="{{ url_for('index') }}">Back to Home</a>
+
+    <script>
+        function populateFields() {
+            const selectedOption = document.getElementById('existing_affiliate').selectedOptions[0];
+            const affiliateName = selectedOption.text;
+            const affiliateId = selectedOption.getAttribute('data-id');
+            const country = selectedOption.getAttribute('data-country');
+
+            // Pre-fill fields with existing data
+            document.getElementById('affiliate_name').value = affiliateName;
+            document.getElementById('affiliate_id').value = affiliateId;
+            document.getElementById('country').value = country;
+        }
+    </script>
 </body>
 </html>

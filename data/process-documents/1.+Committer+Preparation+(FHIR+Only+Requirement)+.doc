@@ -1,0 +1,381 @@
+Date: Mon, 23 Dec 2024 14:31:16 +0000 (UTC)
+Message-ID: <1626903913.72768.1734964276609@DESKTOP-KBUT5S1.awsactivedirectory.hl7.org>
+Subject: Exported From Confluence
+MIME-Version: 1.0
+Content-Type: multipart/related; 
+	boundary="----=_Part_72767_1905684624.1734964276608"
+
+------=_Part_72767_1905684624.1734964276608
+Content-Type: text/html; charset=UTF-8
+Content-Transfer-Encoding: quoted-printable
+Content-Location: file:///C:/exported.html
+
+<html xmlns:o=3D'urn:schemas-microsoft-com:office:office'
+      xmlns:w=3D'urn:schemas-microsoft-com:office:word'
+      xmlns:v=3D'urn:schemas-microsoft-com:vml'
+      xmlns=3D'urn:w3-org-ns:HTML'>
+<head>
+    <meta http-equiv=3D"Content-Type" content=3D"text/html; charset=3Dutf-8=
+">
+    <title>1. Committer Preparation (FHIR Only Requirement) </title>
+    <!--[if gte mso 9]>
+    <xml>
+        <o:OfficeDocumentSettings>
+            <o:TargetScreenSize>1024x640</o:TargetScreenSize>
+            <o:PixelsPerInch>72</o:PixelsPerInch>
+            <o:AllowPNG/>
+        </o:OfficeDocumentSettings>
+        <w:WordDocument>
+            <w:View>Print</w:View>
+            <w:Zoom>90</w:Zoom>
+            <w:DoNotOptimizeForBrowser/>
+        </w:WordDocument>
+    </xml>
+    <![endif]-->
+    <style>
+                <!--
+        @page Section1 {
+            size: 8.5in 11.0in;
+            margin: 1.0in;
+            mso-header-margin: .5in;
+            mso-footer-margin: .5in;
+            mso-paper-source: 0;
+        }
+
+        table {
+            border: solid 1px;
+            border-collapse: collapse;
+        }
+
+        table td, table th {
+            border: solid 1px;
+            padding: 5px;
+        }
+
+        td {
+            page-break-inside: avoid;
+        }
+
+        tr {
+            page-break-after: avoid;
+        }
+
+        div.Section1 {
+            page: Section1;
+        }
+
+        /* Confluence print stylesheet. Common to all themes for print medi=
+a */
+/* Full of !important until we improve batching for print CSS */
+
+@media print {
+    #main {
+        padding-bottom: 1em !important; /* The default padding of 6em is to=
+o much for printouts */
+    }
+
+    body {
+        font-family: Arial, Helvetica, FreeSans, sans-serif;
+        font-size: 10pt;
+        line-height: 1.2;
+    }
+
+    body, #full-height-container, #main, #page, #content, .has-personal-sid=
+ebar #content {
+        background: #fff !important;
+        color: #000 !important;
+        border: 0 !important;
+        width: 100% !important;
+        height: auto !important;
+        min-height: auto !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        display: block !important;
+    }
+
+    a, a:link, a:visited, a:focus, a:hover, a:active {
+        color: #000;
+    }
+
+    #content h1,
+    #content h2,
+    #content h3,
+    #content h4,
+    #content h5,
+    #content h6 {
+        font-family: Arial, Helvetica, FreeSans, sans-serif;
+        page-break-after: avoid;
+    }
+
+    pre {
+        font-family: Monaco, "Courier New", monospace;
+    }
+
+    #header,
+    .aui-header-inner,
+    #navigation,
+    #sidebar,
+    .sidebar,
+    #personal-info-sidebar,
+    .ia-fixed-sidebar,
+    .page-actions,
+    .navmenu,
+    .ajs-menu-bar,
+    .noprint,
+    .inline-control-link,
+    .inline-control-link a,
+    a.show-labels-editor,
+    .global-comment-actions,
+    .comment-actions,
+    .quick-comment-container,
+    #addcomment {
+        display: none !important;
+    }
+
+    /* CONF-28544 cannot print multiple pages in IE */
+    #splitter-content {
+        position: relative !important;
+    }
+
+    .comment .date::before {
+        content: none !important; /* remove middot for print view */
+    }
+
+    h1.pagetitle img {
+        height: auto;
+        width: auto;
+    }
+
+    .print-only {
+        display: block;
+    }
+
+    #footer {
+        position: relative !important; /* CONF-17506 Place the footer at en=
+d of the content */
+        margin: 0;
+        padding: 0;
+        background: none;
+        clear: both;
+    }
+
+    #poweredby {
+        border-top: none;
+        background: none;
+    }
+
+    #poweredby li.print-only {
+        display: list-item;
+        font-style: italic;
+    }
+
+    #poweredby li.noprint {
+        display: none;
+    }
+
+    /* no width controls in print */
+    .wiki-content .table-wrap,
+    .wiki-content p,
+    .panel .codeContent,
+    .panel .codeContent pre,
+    .image-wrap {
+        overflow: visible !important;
+    }
+
+    /* TODO - should this work? */
+    #children-section,
+    #comments-section .comment,
+    #comments-section .comment .comment-body,
+    #comments-section .comment .comment-content,
+    #comments-section .comment p {
+        page-break-inside: avoid;
+    }
+
+    #page-children a {
+        text-decoration: none;
+    }
+
+    /**
+     hide twixies
+
+     the specificity here is a hack because print styles
+     are getting loaded before the base styles. */
+    #comments-section.pageSection .section-header,
+    #comments-section.pageSection .section-title,
+    #children-section.pageSection .section-header,
+    #children-section.pageSection .section-title,
+    .children-show-hide {
+        padding-left: 0;
+        margin-left: 0;
+    }
+
+    .children-show-hide.icon {
+        display: none;
+    }
+
+    /* personal sidebar */
+    .has-personal-sidebar #content {
+        margin-right: 0px;
+    }
+
+    .has-personal-sidebar #content .pageSection {
+        margin-right: 0px;
+    }
+
+    .no-print, .no-print * {
+        display: none !important;
+    }
+}
+-->
+    </style>
+</head>
+<body>
+    <h1>1. Committer Preparation (FHIR Only Requirement) </h1>
+    <div class=3D"Section1">
+        <div class=3D"contentLayout2">
+<div class=3D"columnLayout single" data-layout=3D"single">
+<div class=3D"cell normal" data-type=3D"normal">
+<div class=3D"innerCell">
+<h2 id=3D"id-1.CommitterPreparation(FHIROnlyRequirement)-Description">Descr=
+iption</h2>
+<p>The following describes the steps that need to be followed to prepare fo=
+r developing and publishing a FHIR Implementation Guide.</p>
+<p>Note: not all of the steps are necessary for each IG being created. &nbs=
+p;For example, if you already have publishing tools installed, that step wi=
+ll be skipped.</p>
+</div>
+</div>
+</div>
+<div class=3D"columnLayout single" data-layout=3D"single">
+<div class=3D"cell normal" data-type=3D"normal">
+<div class=3D"innerCell">
+<h2 id=3D"id-1.CommitterPreparation(FHIROnlyRequirement)-Checklist">Checkli=
+st</h2>
+<div class=3D"table-wrap">
+<table class=3D"relative-table wrapped confluenceTable" style=3D"width: 76.=
+7974%;">
+<colgroup>
+<col style=3D"width: 2.13068%;">
+<col style=3D"width: 16.9665%;">
+<col style=3D"width: 7.33902%;">
+<col style=3D"width: 45.1389%;">
+<col style=3D"width: 6.94445%;">
+<col style=3D"width: 21.3068%;">
+</colgroup>
+<tbody>
+<tr>
+<th class=3D"confluenceTh"><br></th>
+<th class=3D"confluenceTh">Description</th>
+<th colspan=3D"1" class=3D"confluenceTh">Responsible</th>
+<th class=3D"confluenceTh"><p>Dependency</p></th>
+<th class=3D"confluenceTh">Estimated time to complete</th>
+<th colspan=3D"1" class=3D"confluenceTh">Links to Related Material</th>
+</tr>
+<tr>
+<td class=3D"confluenceTd">1</td>
+<td class=3D"confluenceTd">Review FHIR IG and publishing Confluence Pages</=
+td>
+<td colspan=3D"1" class=3D"confluenceTd">FHIR IG Technical Resource</td>
+<td class=3D"confluenceTd"><br></td>
+<td class=3D"confluenceTd"><br></td>
+<td colspan=3D"1" class=3D"confluenceTd"><p><a href=3D"/display/FHIR/Design=
+ers">Information for Designers can be found on Confluence</a></p><p><a href=
+=3D"https://github.com/HL7/fhir/wiki/Get-Started-with-FHIR-on-GitHub" class=
+=3D"external-link" rel=3D"nofollow">https://github.com/HL7/fhir/wiki/Get-St=
+arted-with-FHIR-on-GitHub</a></p><p><a href=3D"/display/FHIR/FHIR+Build+Pro=
+cess">FHIR Build Process</a></p></td>
+</tr>
+<tr>
+<td class=3D"confluenceTd">2</td>
+<td class=3D"confluenceTd">Review date for current ballot/release cycle</td=
+>
+<td colspan=3D"1" class=3D"confluenceTd">FHIR IG Technical Resource</td>
+<td class=3D"confluenceTd"><br></td>
+<td class=3D"confluenceTd"><br></td>
+<td colspan=3D"1" class=3D"confluenceTd"><a href=3D"/display/HL7/HL7+Calend=
+ars">HL7 Calendars</a></td>
+</tr>
+<tr>
+<td class=3D"confluenceTd">3</td>
+<td class=3D"confluenceTd">Request for "committer" access to GitHUB reposit=
+ory for developer submitted</td>
+<td colspan=3D"1" class=3D"confluenceTd">FHIR IG Technical Resource</td>
+<td class=3D"confluenceTd">
+<ul>
+<li>As part of your email requesting commit privileges, please indicate in =
+your email:=20
+<ul>
+<li>What HL7 Git project you need access to&nbsp;</li>
+<li>that you understand and agree to abide by the Intellectual Property rul=
+es as defined by the<span>&nbsp;</span><a style=3D"text-decoration: none;" =
+class=3D"external-link" href=3D"http://wiki.hl7.org/index.php?title=3DCo-Ch=
+air_Handbook_Information#Read_Me" rel=3D"nofollow">HL7 Governance and Opera=
+tions Manual (GOM)</a><span>&nbsp;</span>(at the time of this writing, sect=
+ion 16 of the GOM)</li>
+<li>that you've signed up for the<span>&nbsp;</span><a href=3D"https://chat=
+.fhir.org/#narrow/stream/committers" class=3D"external-link" style=3D"text-=
+decoration: none;" rel=3D"nofollow">Committers thread</a><span>&nbsp;</span=
+>on<span>&nbsp;</span><a class=3D"external-link" href=3D"http://chat.fhir.o=
+rg/" style=3D"text-decoration: none;" rel=3D"nofollow">chat.fhir.org</a><sp=
+an>&nbsp;</span>and agree to monitor it for changes to commit rules</li>
+</ul></li>
+<li>Please copy the co-chairs of the responsible work group and/or existing=
+ committers and have at least one of them confirm that you should have acce=
+ss.</li>
+</ul></td>
+<td class=3D"confluenceTd"><br></td>
+<td class=3D"confluenceTd"><p>Email request to:&nbsp; <a href=3D"http://Llo=
+yd McKenzie" class=3D"external-link" rel=3D"nofollow">lmckenzie@gevityinc.c=
+om</a></p><p>Link to GitHub signup: <a href=3D"https://github.com/join" cla=
+ss=3D"external-link" rel=3D"nofollow">Sign&nbsp;up</a></p><p>Link to Zulip =
+git-help stream: <a href=3D"https://chat.fhir.org/#narrow/stream/179293-com=
+mitters.2Fgit-help" class=3D"external-link" rel=3D"nofollow">https://chat.f=
+hir.org/#narrow/stream/179293-committers.2Fgit-help</a></p></td>
+</tr>
+<tr>
+<td class=3D"confluenceTd">4</td>
+<td class=3D"confluenceTd">Publishing Tools installed</td>
+<td colspan=3D"1" class=3D"confluenceTd">FHIR IG Technical Resource</td>
+<td class=3D"confluenceTd"><br></td>
+<td class=3D"confluenceTd"><br></td>
+<td class=3D"confluenceTd"><a href=3D"/display/FHIR/IG+Publisher+Documentat=
+ion">Link to FHIR IG Publishing Tool</a></td>
+</tr>
+<tr>
+<td class=3D"confluenceTd">5</td>
+<td class=3D"confluenceTd">Developer has reviewed process for creating IG a=
+nd running build</td>
+<td colspan=3D"1" class=3D"confluenceTd">FHIR IG Technical Resource</td>
+<td class=3D"confluenceTd"><br></td>
+<td class=3D"confluenceTd"><br></td>
+<td class=3D"confluenceTd"><p><a href=3D"/display/FHIR/FHIR+IG+PackageList+=
+doco">FHIR IG PackageList doco</a></p><p><a href=3D"/display/FHIR/HL7+QA+pr=
+ocess+for+FHIR+IGs">HL7 QA process for FHIR IGs</a></p><p><a href=3D"/displ=
+ay/FHIR/FHIR+Implementation+Guide+Publishing+Requirements">FHIR Implementat=
+ion Guide Publishing Requirements</a></p><p><a href=3D"/display/FHIR/IG+Pub=
+lisher+Documentation">IG Publisher Documentation</a></p></td>
+</tr>
+<tr>
+<td colspan=3D"1" class=3D"confluenceTd">6</td>
+<td colspan=3D"1" class=3D"confluenceTd">Sign up for Zulip IG Creation stre=
+am</td>
+<td colspan=3D"1" class=3D"confluenceTd"><span>FHIR IG Technical Resource</=
+span></td>
+<td colspan=3D"1" class=3D"confluenceTd"><br></td>
+<td colspan=3D"1" class=3D"confluenceTd"><br></td>
+<td colspan=3D"1" class=3D"confluenceTd">Link to Zulip IG Creation stream: =
+<a href=3D"https://chat.fhir.org/#narrow/stream/179252-IG-creation" class=
+=3D"external-link" rel=3D"nofollow">https://chat.fhir.org/#narrow/stream/17=
+9252-IG-creation</a></td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+</div>
+</div>
+</div>
+    </div>
+</body>
+</html>
+------=_Part_72767_1905684624.1734964276608--

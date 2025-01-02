@@ -26,7 +26,7 @@ The script requires the following arguments:
 - `--output (-o)`: Optional. The output directory or file path where the CSV will be saved.
 
 Example command:
-    python parse-path-for-package-details.py -u "https://example.com/fhir/package" -o "./output"
+    python3 scripts/parse-path-for-package-details-and-realm.py -u https://hl7.org/fhir/us/vrdr/STU3/ -o data/working/package-path-details
 """
 
 import argparse

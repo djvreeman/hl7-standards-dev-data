@@ -88,5 +88,5 @@ def fetch_and_process_guides(url, output_filename):
 
 if __name__ == "__main__":
     url = "https://raw.githubusercontent.com/FHIR/ig-registry/master/fhir-ig-list.json"
-    output_filename = "data/working/all-fhir-packages/20240905-all_packages_data.csv"
+    output_filename = "data/working/all-fhir-packages/20241125-all_packages_data.csv"
     fetch_and_process_guides(url, output_filename)

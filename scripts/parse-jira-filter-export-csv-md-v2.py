@@ -57,7 +57,12 @@ field_mappings = {
     'fields.customfield_12316': 'Approval Date',
     'fields.customfield_11302': 'Specification',
     'fields.resolutiondate': 'Resolution Date',
-    'fields.customfield_11400': 'WG'
+    'fields.created': 'Created Date',
+    'fields.customfield_11400': 'WG',
+    # Placeholder fields for post-hoc processing
+    'fields.family': 'Product Family',
+    'fields.calculated_days_to_res': 'Days to Resolution', # Derived field to be calculated post-hoc
+    'fields.spec_display_name': 'Specification Display Name' # Derived from https://github.com/HL7/JIRA-Spec-Artifacts/
     # Add more mappings as needed
 }
 

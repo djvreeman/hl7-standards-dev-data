@@ -45,11 +45,11 @@ def sanitize_filename(filename):
     Sanitize the filename by removing problematic characters
     and ensuring consistency with Markdown formatting.
     """
-    # Replace spaces with plus signs
-    filename = filename.replace(" ", "+")
+    # Replace spaces with underscores and remove backslashes
+    filename = filename.replace(" ", "_").replace("\\", "")
 
     # Remove any characters that are not alphanumeric, underscores, periods, or hyphens
-    filename = re.sub(r"[^a-zA-Z0-9+_.-]", "", filename)
+    filename = re.sub(r"[^a-zA-Z0-9_.-]", "", filename)
 
     # Ensure the filename does not start or end with a period or hyphen
     filename = re.sub(r"^[.-]+|[.-]+$", "", filename)

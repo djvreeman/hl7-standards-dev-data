@@ -49,6 +49,7 @@ def generate_summary_markdown(df):
         "- [Overall Summary](#overall-summary)",
         "- [Summary by Time Period](#summary-by-time-period)",
         "- [Breakdown by Realm and Time Period](#breakdown-by-realm-and-time-period)",
+        "- [Breakdown by WG Name and Realm](#breakdown-by-wg-name-and-realm-total-issues--percent-within-wg)",
         "- [Breakdown by WG Name and Time Period](#breakdown-by-wg-name-and-time-period)",
         "- [Breakdown by Specification and Time Period](#breakdown-by-specification-and-time-period)",
         "- [Breakdown by Product Family and Time Period](#breakdown-by-product-family-and-time-period)",
@@ -110,6 +111,25 @@ def generate_summary_markdown(df):
 
     wgs = [{"WG Name": w} for w in sorted(df['WG Name'].unique())]
     render_breakdown("Breakdown by WG Name and Time Period", wgs, ["WG Name"])
+
+       # Breakdown by WG Name and Realm (% within WG Name)
+    md.append("## Breakdown by WG Name and Realm (Total Issues + % within WG)\n")
+    grouped = df.groupby(['WG Name', 'Realm']).size().reset_index(name='Total Issues')
+
+    # Calculate total issues per WG
+    wg_totals = grouped.groupby('WG Name')['Total Issues'].transform('sum')
+    grouped['% within WG'] = (grouped['Total Issues'] / wg_totals * 100).round(1)
+    grouped = grouped.sort_values(by=['WG Name', 'Total Issues'], ascending=[True, False])
+
+    md.append("| WG Name | Realm | Total Issues | % within WG |")
+    md.append("|---------|--------|---------------|--------------|")
+    for _, row in grouped.iterrows():
+        wg = row['WG Name'] if pd.notnull(row['WG Name']) else "Unknown"
+        realm = row['Realm'] if pd.notnull(row['Realm']) else "Unknown"
+        total = int(row['Total Issues'])
+        pct = f"{row['% within WG']:.1f}"
+        md.append(f"| {wg} | {realm} | {total} | {pct}% |")
+    md.append("")
 
     specs = df[['WG Name','Specification Display Name']].drop_duplicates().sort_values(
         by=['WG Name','Specification Display Name']

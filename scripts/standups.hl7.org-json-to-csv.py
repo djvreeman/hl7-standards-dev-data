@@ -6,7 +6,7 @@
 # This simple script calls the standups.hl7.org json API and returns a cleaned-up csv file.
 #
 # Example usage:
-# python3 standups.hl7.org-json-to-csv.py -p 4
+# python3 scripts/standups.hl7.org-json-to-csv.py -p 4
 
 
 try:

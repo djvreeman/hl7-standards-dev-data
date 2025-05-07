@@ -1,6 +1,47 @@
+"""
+docx_to_markdown.py
+
+This script converts Microsoft Word (.docx) files to Markdown (.md) format,
+preserving basic structure such as:
+
+- Numbered and unnumbered headings (Heading 1, Heading 2, Heading 3, etc.)
+- Bulleted and numbered lists
+- Regular paragraph text
+
+Temporary Word files (starting with '~$') are automatically skipped.
+
+Usage:
+    python docx_to_markdown.py INPUT_PATH [INPUT_PATH2 ...] --output OUTPUT_FOLDER
+
+Arguments:
+    INPUT_PATH         One or more paths to .docx files or folders containing .docx files.
+    --output, -o       (Optional) Output folder for the Markdown files (default: ./output).
+
+Examples:
+    # Convert a single file
+    python docx_to_markdown.py reports/summary.docx --output converted_markdown/
+
+    # Convert all .docx files in a folder
+    python docx_to_markdown.py reports/ --output converted_markdown/
+
+    # Convert multiple files and folders
+    python docx_to_markdown.py reports/ notes/ file.docx --output output_folder/
+
+Requirements:
+    - Python 3.7+
+    - python-docx package (install via: pip install python-docx)
+
+Notes:
+    - Only .docx files are processed (not .doc, .pdf, etc.).
+    - The script handles headings, lists, and paragraphs, but not images or tables.
+    - Output folder is created automatically if it does not exist.
+    - Subfolders inside input folders are processed recursively.
+
+"""
+
 import os
 from docx import Document
-
+import argparse
 
 def convert_docx_with_numbered_headings(docx_path, output_path):
     """
@@ -115,7 +156,6 @@ def main(input_paths, output_folder):
 
 
 if __name__ == "__main__":
-    import argparse
 
     # Set up argument parsing
     parser = argparse.ArgumentParser(description="Convert .docx files to Markdown format.")

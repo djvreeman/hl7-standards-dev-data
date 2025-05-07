@@ -2,8 +2,53 @@
 import argparse
 import pandas as pd
 import numpy as np
+import re
+from datetime import datetime
+
+def parse_time_period(period_str):
+    """Parse a time period string like '2025T1' or '2024' into start and end dates"""
+    # Full year format: '2024'
+    full_year_match = re.match(r'^(\d{4})$', period_str)
+    if full_year_match:
+        year = int(full_year_match.group(1))
+        start_date = pd.Timestamp(year=year, month=1, day=1, tz='UTC')
+        end_date = pd.Timestamp(year=year, month=12, day=31, tz='UTC')
+        label = f"{year}"
+        return start_date, end_date, label
+    
+    # Period format: '2025T1', '2024T2', etc.
+    tri_match = re.match(r'^(\d{4})T([1-3])$', period_str)
+    if tri_match:
+        year = int(tri_match.group(1))
+        tri = tri_match.group(2)
+        
+        if tri == '1':
+            start_date = pd.Timestamp(year=year, month=1, day=1, tz='UTC')
+            end_date = pd.Timestamp(year=year, month=4, day=30, tz='UTC')
+        elif tri == '2':
+            start_date = pd.Timestamp(year=year, month=5, day=1, tz='UTC')
+            end_date = pd.Timestamp(year=year, month=8, day=31, tz='UTC')
+        elif tri == '3':
+            start_date = pd.Timestamp(year=year, month=9, day=1, tz='UTC')
+            end_date = pd.Timestamp(year=year, month=12, day=31, tz='UTC')
+        
+        label = f"{year}T{tri}"
+        return start_date, end_date, label
+    
+    # If we got here, the format is invalid
+    raise ValueError(f"Invalid time period format: {period_str}. Use 'YYYY' or 'YYYYT[1-3]'")
+
+def get_period_label(start_date, end_date):
+    """Get a human-readable label for a date range"""
+    start_str = start_date.strftime("%B %d, %Y")
+    end_str = end_date.strftime("%B %d, %Y")
+    return f"{start_str} to {end_str}"
 
 def get_tri_section(month_num):
+    """Convert month number to period label"""
+    if pd.isna(month_num):
+        return "Unknown"
+    month_num = int(month_num)
     if month_num in [1, 2, 3, 4]:
         return "T1"
     elif month_num in [5, 6, 7, 8]:
@@ -13,175 +58,442 @@ def get_tri_section(month_num):
     else:
         return "Unknown"
 
-def process_data(df):
-    df['Created Date'] = pd.to_datetime(df['Created Date'], errors='coerce')
-    df['Resolution Date'] = pd.to_datetime(df['Resolution Date'], errors='coerce')
-    df['creation_month'] = df['Created Date'].dt.month
-    df['creation_tri'] = df['creation_month'].apply(lambda m: get_tri_section(m) if pd.notnull(m) else "Unknown")
-    df['resolution_month'] = df['Resolution Date'].dt.month
-    df['resolution_tri'] = df['resolution_month'].apply(lambda m: get_tri_section(m) if pd.notnull(m) else "Unknown")
+def process_data(df, analysis_periods):
+    """Process dataframe and add analysis fields"""
+    # Convert dates to datetime with UTC timezone
+    df['Created Date'] = pd.to_datetime(df['Created Date'], errors='coerce', utc=True)
+    df['Resolution Date'] = pd.to_datetime(df['Resolution Date'], errors='coerce', utc=True)
+    
+    # Add basic derived fields
     df['is_resolved'] = df['Resolution Date'].notnull()
     df['days_to_resolution'] = (df['Resolution Date'] - df['Created Date']).dt.total_seconds() / 86400.0
+    
+    # Add month and period fields
+    df['creation_month'] = df['Created Date'].dt.month
+    df['creation_year'] = df['Created Date'].dt.year
+    df['creation_tri'] = df['creation_month'].apply(get_tri_section)
+    df['resolution_month'] = df['Resolution Date'].dt.month
+    df['resolution_year'] = df['Resolution Date'].dt.year
+    df['resolution_tri'] = df['resolution_month'].apply(get_tri_section)
+    
+    # Create period analysis flags
+    for period_str in analysis_periods:
+        start_date, end_date, label = parse_time_period(period_str)
+        
+        # Issues created in this period
+        df[f'created_in_{label}'] = (
+            (df['Created Date'] >= start_date) & 
+            (df['Created Date'] <= end_date)
+        )
+        
+        # Issues resolved in this period
+        df[f'resolved_in_{label}'] = (
+            df['is_resolved'] & 
+            (df['Resolution Date'] >= start_date) & 
+            (df['Resolution Date'] <= end_date)
+        )
+        
+        # Backlog at end of period (created before or during, not resolved or resolved after)
+        df[f'backlog_at_{label}_end'] = (
+            (df['Created Date'] <= end_date) & 
+            ((~df['is_resolved']) | (df['Resolution Date'] > end_date))
+        )
+    
     return df
 
-def compute_time_period_metrics(df_subset, period):
-    total_mask = (df_subset['creation_tri'] == period) | (df_subset['resolution_tri'] == period)
-    total = df_subset[total_mask].shape[0]
-    resolved_mask = df_subset['is_resolved'] & (df_subset['resolution_tri'] == period)
-    resolved = df_subset[resolved_mask].shape[0]
-    backlog_mask = (~df_subset['is_resolved']) & (df_subset['creation_tri'] == period)
-    backlog = df_subset[backlog_mask].shape[0]
-    times = df_subset.loc[resolved_mask, 'days_to_resolution']
+def get_period_metrics(df, period_str):
+    """Get metrics for a specific analysis period"""
+    _, _, label = parse_time_period(period_str)
+    
+    # Count basic metrics
+    new_issues = df[f'created_in_{label}'].sum()
+    resolved_issues = df[f'resolved_in_{label}'].sum()
+    backlog = df[f'backlog_at_{label}_end'].sum()
+    
+    # Calculate resolution times
+    times = df.loc[df[f'resolved_in_{label}'], 'days_to_resolution']
+    
     if not times.empty:
         ave = times.mean()
         med = times.median()
-        p90 = times.quantile(0.9)
+        p80 = times.quantile(0.8)
     else:
-        ave = med = p90 = None
-    return total, resolved, backlog, ave, med, p90
+        ave = med = p80 = None
+    
+    return new_issues, resolved_issues, backlog, ave, med, p80
 
-def generate_summary_markdown(df):
+def find_periods_in_period(period_str):
+    """Find all periods within a period"""
+    start_date, end_date, _ = parse_time_period(period_str)
+    
+    tri_periods = []
+    
+    # Get years covered
+    start_year = start_date.year
+    end_year = end_date.year
+    
+    # For each year
+    for year in range(start_year, end_year + 1):
+        # Determine periods to include
+        if year == start_year:
+            start_month = start_date.month
+            start_tri = (start_month - 1) // 4 + 1
+        else:
+            start_tri = 1
+            
+        if year == end_year:
+            end_month = end_date.month
+            end_tri = (end_month - 1) // 4 + 1
+        else:
+            end_tri = 3
+        
+        # Add periods
+        for tri in range(start_tri, end_tri + 1):
+            tri_periods.append(f"{year}T{tri}")
+    
+    return tri_periods
+
+def get_tri_metrics(df, tri_str):
+    """Get metrics for a specific period"""
+    start_date, end_date, label = parse_time_period(tri_str)
+    
+    # New issues in this period
+    new_mask = (df['Created Date'] >= start_date) & (df['Created Date'] <= end_date)
+    new_issues = new_mask.sum()
+    
+    # Resolved issues in this period
+    resolved_mask = df['is_resolved'] & (df['Resolution Date'] >= start_date) & (df['Resolution Date'] <= end_date)
+    resolved = resolved_mask.sum()
+    
+    # Backlog at end of period
+    backlog_mask = (df['Created Date'] <= end_date) & ((~df['is_resolved']) | (df['Resolution Date'] > end_date))
+    backlog = backlog_mask.sum()
+    
+    # Resolution times
+    times = df.loc[resolved_mask, 'days_to_resolution']
+    if not times.empty:
+        ave = times.mean()
+        med = times.median()
+        p80 = times.quantile(0.8)
+    else:
+        ave = med = p80 = None
+    
+    return label, new_issues, resolved, backlog, ave, med, p80
+
+def get_performance_band(p80_value):
+    """Return the performance band label based on P80 value"""
+    if p80_value is None:
+        return "N/A"
+    if p80_value <= 60:
+        return "Excellent"
+    elif p80_value <= 180:
+        return "Good"
+    elif p80_value <= 365:
+        return "Moderate"
+    else:
+        return "Needs Improvement"
+
+def analyze_submitters(df, period_str):
+    """Analyze issue submitters for a specific period"""
+    start_date, end_date, label = parse_time_period(period_str)
+    
+    # Get all submitters ever
+    all_submitters = set(df['Reporter'].dropna().unique())
+    total_submitters_ever = len(all_submitters)
+    
+    # Get submitters before this period
+    before_period_mask = df['Created Date'] < start_date
+    before_period_submitters = set(df.loc[before_period_mask, 'Reporter'].dropna().unique())
+    
+    # Get submitters in this period
+    period_mask = (df['Created Date'] >= start_date) & (df['Created Date'] <= end_date)
+    period_submitters = set(df.loc[period_mask, 'Reporter'].dropna().unique())
+    total_submitters_in_period = len(period_submitters)
+    
+    # Find new submitters in this period
+    new_submitters = period_submitters - before_period_submitters
+    total_new_submitters = len(new_submitters)
+    
+    # Calculate percentage of new submitters relative to this period
+    if total_submitters_in_period > 0:
+        new_submitter_percent = (total_new_submitters / total_submitters_in_period) * 100
+    else:
+        new_submitter_percent = 0
+    
+    return {
+        'total_submitters_ever': total_submitters_ever,
+        'total_submitters_in_period': total_submitters_in_period,
+        'total_new_submitters': total_new_submitters,
+        'new_submitter_percent': new_submitter_percent
+    }
+
+def generate_report(df, analysis_periods):
+    """Generate full markdown report"""
     md = []
+    
+    # Get the primary analysis period (first one specified)
+    primary_period = analysis_periods[0]
+    start_date, end_date, label = parse_time_period(primary_period)
+    human_readable_period = get_period_label(start_date, end_date)
+    
+    # Title and analysis period
     md.append("# Issue Resolution Summary Report\n")
-    # Table of Contents
+    md.append(f"> **Analysis Period:** {human_readable_period}\n")
+    
+    # Add table of contents
     md.append("## Table of Contents\n")
-    md.extend([
-        "- [Overall Summary](#overall-summary)",
-        "- [Summary by Time Period](#summary-by-time-period)",
-        "- [Breakdown by Realm and Time Period](#breakdown-by-realm-and-time-period)",
-        "- [Breakdown by WG Name and Realm](#breakdown-by-wg-name-and-realm-total-issues--percent-within-wg)",
-        "- [Breakdown by WG Name and Time Period](#breakdown-by-wg-name-and-time-period)",
-        "- [Breakdown by Specification and Time Period](#breakdown-by-specification-and-time-period)",
-        "- [Breakdown by Product Family and Time Period](#breakdown-by-product-family-and-time-period)",
-        "- [Notes](#notes)",
-        "  - [P90 Performance Bands (based on 2024 data)](#p90-performance-bands-based-on-2024-data)",
-        ""
-    ])
-
+    md.append("- [How to Read This Report](#how-to-read-this-report)")
+    md.append("- [Overall Summary](#overall-summary)")
+    md.append("- [Summary by Analysis Period](#summary-by-analysis-period)")
+    
+    for period in analysis_periods:
+        _, _, label = parse_time_period(period)
+        md.append(f"- [Breakdown by Period within {label}](#breakdown-by-period-within-{label.lower()})")
+    
+    md.append("- [Issue Submitters](#issue-submitters)")
+    md.append("- [Breakdown by Realm](#breakdown-by-realm)")
+    md.append("- [Breakdown by WG Name and Realm](#breakdown-by-wg-name-and-realm)")
+    md.append("- [Breakdown by WG Name](#breakdown-by-wg-name)")
+    md.append("- [Breakdown by Specification](#breakdown-by-specification)")
+    md.append("- [Breakdown by Product Family](#breakdown-by-product-family)")
+    md.append("")
+    
+    # How to Read This Report (after TOC as requested)
+    md.append("## How to Read This Report\n")
+    md.append("### Key Metrics\n")
+    md.append("- **New:** Issues created during the specified time period")
+    md.append("- **Resolved:** Issues with a resolution date during the specified time period. Note: the resolution date in Jira is assigned early -- when an issue is given a (proposed) disposition. This is not necessarily when the change is applied to the specification.")
+    md.append("- **Backlog:** Issues created at any time before the end of the specified period that remain unresolved at the end of that period")
+    md.append("- **Ave (days):** Average time to resolution for issues resolved in this period")
+    md.append("- **Median (days):** Median time to resolution (50% of issues resolved faster than this)")
+    md.append("- **P80 (days):** 80th percentile resolution time (80% of issues resolved faster than this)\n")
+    
+    md.append("### Time Periods\n")
+    md.append("Periods are defined as:")
+    md.append("- **T1:** January, February, March, April")
+    md.append("- **T2:** May, June, July, August")
+    md.append("- **T3:** September, October, November, December\n")
+    
+    md.append("### Performance Bands\n")
+    md.append("| Band                  | P80 Range (days) | Interpretation                                                                             |")
+    md.append("|-----------------------|------------------|--------------------------------------------------------------------------------------------|")
+    md.append("| **Excellent**         | ≤ 60             | 80% of tickets close within two months—very tight SLA.                                      |")
+    md.append("| **Good**              | 61 – 180         | 80% close within six months—reasonable for complex standard‑development.                    |")
+    md.append("| **Moderate**          | 181 – 365        | 80% close within a year—acceptable but opportunities exist to accelerate processes.         |")
+    md.append("| **Needs Improvement** | > 365            | 20% of tickets take longer than a year—indicative of serious bottlenecks or resource gaps.  |\n")
+    
     # Overall summary
     total = len(df)
     resolved = df['is_resolved'].sum()
     backlog = total - resolved
+    
+    # Get earliest and latest dates in dataset
+    earliest_date = df['Created Date'].min()
+    latest_date = df['Created Date'].max()
+    date_range = f"{earliest_date.strftime('%B %d, %Y')} to {latest_date.strftime('%B %d, %Y')}"
+    
     times_all = df.loc[df['is_resolved'], 'days_to_resolution']
-    ave_all = times_all.mean() if not times_all.empty else None
-    med_all = times_all.median() if not times_all.empty else None
-    p90_all = times_all.quantile(0.9) if not times_all.empty else None
-
+    if not times_all.empty:
+        ave_all = times_all.mean()
+        med_all = times_all.median()
+        p80_all = times_all.quantile(0.8)
+        ave_str = f"{ave_all:.2f}"
+        med_str = f"{med_all:.2f}"
+        p80_str = f"{p80_all:.2f}"
+        band = get_performance_band(p80_all)
+    else:
+        ave_str = med_str = p80_str = "N/A"
+        band = "N/A"
+    
     md.append("## Overall Summary\n")
+    md.append(f"This summary includes all issues in the dataset from **{date_range}**.\n")
     md.append(f"- **Total Issues:** {total}")
     md.append(f"- **Resolved Issues:** {resolved}")
-    md.append(f"- **Backlog (Unresolved):** {backlog}")
-    md.append(f"- **Ave Resolution Time (days):** {ave_all:.2f}" if ave_all is not None else "- **Ave Resolution Time (days):** N/A")
-    md.append(f"- **Median Resolution Time (days):** {med_all:.2f}" if med_all is not None else "- **Median Resolution Time (days):** N/A")
-    md.append(f"- **P90 Resolution Time (days):** {p90_all:.2f}" if p90_all is not None else "- **P90 Resolution Time (days):** N/A")
+    md.append(f"- **Current Backlog (Unresolved):** {backlog}")
+    md.append(f"- **Ave Resolution Time (days):** {ave_str}")
+    md.append(f"- **Median Resolution Time (days):** {med_str}")
+    md.append(f"- **P80 Resolution Time (days):** {p80_str}")
+    md.append(f"- **Performance Band:** {band}")
     md.append("")
-
-    # Summary by Time Period
-    md.append("## Summary by Time Period\n")
-    md.append("| Time Period | Total | Resolved | Backlog | Ave (days) | Median (days) | P90 (days) |")
-    md.append("|-------------|-------|----------|---------|------------|---------------|------------|")
-    for period in ['T1','T2','T3']:
-        t, r, b, ave, med, p90 = compute_time_period_metrics(df, period)
-        ave_str = f"{ave:.2f}" if ave is not None else "N/A"
-        med_str = f"{med:.2f}" if med is not None else "N/A"
-        p90_str = f"{p90:.2f}" if p90 is not None else "N/A"
-        md.append(f"| {period} | {t} | {r} | {b} | {ave_str} | {med_str} | {p90_str} |")
+    
+    # Summary by Analysis Period
+    md.append("## Summary by Analysis Period\n")
+    md.append("| Period | New | Resolved | Backlog | Ave (days) | Median (days) | P80 (days) | Performance |")
+    md.append("|--------|-----|----------|---------|------------|---------------|------------|------------|")
+    
+    for period in analysis_periods:
+        _, _, label = parse_time_period(period)
+        n, r, b, ave, med, p80 = get_period_metrics(df, period)
+        
+        if ave is not None:
+            ave_str = f"{ave:.2f}"
+            med_str = f"{med:.2f}"
+            p80_str = f"{p80:.2f}"
+            band = get_performance_band(p80)
+        else:
+            ave_str = med_str = p80_str = "N/A"
+            band = "N/A"
+        
+        md.append(f"| {label} | {n} | {r} | {b} | {ave_str} | {med_str} | {p80_str} | {band} |")
+    
     md.append("")
-
-    def render_breakdown(title, groups, key_cols):
-        md.append(f"## {title}\n")
-        header = key_cols + ["Time Period","Total","Resolved","Backlog","Ave (days)","Median (days)","P90 (days)"]
-        md.append("| " + " | ".join(header) + " |")
-        md.append("|" + "|".join("-"*len(h) for h in header) + "|")
-        for grp in groups:
-            df_grp = df.copy()
-            for col, val in grp.items():
-                df_grp = df_grp[df_grp[col] == val]
-            for period in ['T1','T2','T3']:
-                t, r, b, ave, med, p90 = compute_time_period_metrics(df_grp, period)
-                ave_str = f"{ave:.2f}" if ave is not None else "N/A"
-                med_str = f"{med:.2f}" if med is not None else "N/A"
-                p90_str = f"{p90:.2f}" if p90 is not None else "N/A"
-                row = [str(grp.get(col, '')) for col in key_cols] + [period, str(t), str(r), str(b), ave_str, med_str, p90_str]
-                md.append("| " + " | ".join(row) + " |")
+    
+    # Breakdown by period within each period
+    for period in analysis_periods:
+        _, _, label = parse_time_period(period)
+        
+        md.append(f"## Breakdown by Period within {label}\n")
+        md.append("| Period | New | Resolved | Backlog | Ave (days) | Median (days) | P80 (days) | Performance |")
+        md.append("|--------|-----|----------|---------|------------|---------------|------------|------------|")
+        
+        # Get metrics for each period
+        tri_periods = find_periods_in_period(period)
+        
+        for tri in tri_periods:
+            tri_label, n, r, b, ave, med, p80 = get_tri_metrics(df, tri)
+            
+            if ave is not None:
+                ave_str = f"{ave:.2f}"
+                med_str = f"{med:.2f}"
+                p80_str = f"{p80:.2f}"
+                band = get_performance_band(p80)
+            else:
+                ave_str = med_str = p80_str = "N/A"
+                band = "N/A"
+            
+            md.append(f"| {tri_label} | {n} | {r} | {b} | {ave_str} | {med_str} | {p80_str} | {band} |")
+        
         md.append("")
-
-    realms = [{"Realm": r} for r in sorted(df['Realm'].unique())]
-    render_breakdown("Breakdown by Realm and Time Period", realms, ["Realm"])
-
-    wgs = [{"WG Name": w} for w in sorted(df['WG Name'].unique())]
-    render_breakdown("Breakdown by WG Name and Time Period", wgs, ["WG Name"])
-
-       # Breakdown by WG Name and Realm (% within WG Name)
-    md.append("## Breakdown by WG Name and Realm (Total Issues + % within WG)\n")
+    
+    # New section - Issue Submitters Analysis
+    md.append("## Issue Submitters\n")
+    
+    # Issue Submitters table
+    md.append("| Period | Total Submitters | New Submitters | % New Submitters |")
+    md.append("|--------|------------------|----------------|------------------|")
+    
+    # For each analysis period
+    for period in analysis_periods:
+        _, _, label = parse_time_period(period)
+        submitter_data = analyze_submitters(df, period)
+        
+        # Calculate percentage with proper precision
+        percent_new = f"{submitter_data['new_submitter_percent']:.1f}%"
+        
+        md.append(f"| {label} | {submitter_data['total_submitters_in_period']} | {submitter_data['total_new_submitters']} | {percent_new} |")
+    
+    md.append("")
+    
+    # Helper function for category breakdowns
+    def render_breakdown(title, column):
+        md.append(f"## {title}\n")
+        md.append(f"| {column} | Period | New | Resolved | Backlog | Ave (days) | Median (days) | P80 (days) | Performance |")
+        md.append("|" + "-" * len(column) + "|--------|-----|----------|---------|------------|---------------|------------|------------|")
+        
+        # Get categories
+        categories = sorted(df[column].dropna().unique())
+        
+        for category in categories:
+            category_df = df[df[column] == category]
+            
+            for period in analysis_periods:
+                _, _, label = parse_time_period(period)
+                
+                # Count new issues
+                new_count = category_df[f'created_in_{label}'].sum()
+                
+                # Count resolved issues
+                resolved_count = category_df[f'resolved_in_{label}'].sum()
+                
+                # Count backlog
+                backlog_count = category_df[f'backlog_at_{label}_end'].sum()
+                
+                # Calculate resolution times
+                times = category_df.loc[category_df[f'resolved_in_{label}'], 'days_to_resolution']
+                
+                if not times.empty and len(times) > 0:
+                    ave = times.mean()
+                    med = times.median()
+                    p80 = times.quantile(0.8)
+                    ave_str = f"{ave:.2f}"
+                    med_str = f"{med:.2f}"
+                    p80_str = f"{p80:.2f}"
+                    band = get_performance_band(p80)
+                else:
+                    ave_str = med_str = p80_str = "N/A"
+                    band = "N/A"
+                
+                md.append(f"| {category} | {label} | {new_count} | {resolved_count} | {backlog_count} | {ave_str} | {med_str} | {p80_str} | {band} |")
+        
+        md.append("")
+    
+    # Breakdowns by category
+    render_breakdown("Breakdown by Realm", "Realm")
+    
+    # Breakdown by WG Name and Realm
+    md.append("## Breakdown by WG Name and Realm\n")
     grouped = df.groupby(['WG Name', 'Realm']).size().reset_index(name='Total Issues')
-
-    # Calculate total issues per WG
+    
+    # Calculate percentages
     wg_totals = grouped.groupby('WG Name')['Total Issues'].transform('sum')
     grouped['% within WG'] = (grouped['Total Issues'] / wg_totals * 100).round(1)
     grouped = grouped.sort_values(by=['WG Name', 'Total Issues'], ascending=[True, False])
-
+    
     md.append("| WG Name | Realm | Total Issues | % within WG |")
     md.append("|---------|--------|---------------|--------------|")
+    
     for _, row in grouped.iterrows():
         wg = row['WG Name'] if pd.notnull(row['WG Name']) else "Unknown"
         realm = row['Realm'] if pd.notnull(row['Realm']) else "Unknown"
         total = int(row['Total Issues'])
         pct = f"{row['% within WG']:.1f}"
         md.append(f"| {wg} | {realm} | {total} | {pct}% |")
+    
     md.append("")
-
-    specs = df[['WG Name','Specification Display Name']].drop_duplicates().sort_values(
-        by=['WG Name','Specification Display Name']
-    ).to_dict(orient='records')
-    render_breakdown("Breakdown by Specification and Time Period", specs,
-                     ["WG Name","Specification Display Name"])
-
-    pfs = [{"Product Family": p} for p in sorted(df['Product Family'].unique())]
-    render_breakdown("Breakdown by Product Family and Time Period", pfs, ["Product Family"])
-
-    # Notes
-    md.append("## Notes\n")
-    md.append("- **Time Periods** are defined as:")
-    md.append("  - **T1:** January, February, March, April")
-    md.append("  - **T2:** May, June, July, August")
-    md.append("  - **T3:** September, October, November, December\n")
-    md.append("- **P90 (90th percentile)** indicates the number of days within which 90% of resolved issues were closed.\n")
-    md.append("### P90 Performance Bands (based on 2024 data)\n")
-    md.append("| Band                  | P90 Range (days) | Interpretation                                                                             |")
-    md.append("|-----------------------|------------------|--------------------------------------------------------------------------------------------|")
-    md.append("| **Excellent**         | ≤ 60             | 90% of tickets close within two months—very tight SLA.                                      |")
-    md.append("| **Good**              | 61 – 180         | 90% close within six months—reasonable for complex standard‑development.                    |")
-    md.append("| **Moderate**          | 181 – 365        | 90% close within a year—acceptable but opportunities exist to accelerate processes.         |")
-    md.append("| **Needs Improvement** | > 365            | 10% of tickets take longer than a year—indicative of serious bottlenecks or resource gaps.  |\n")
-    md.append("**Rationale:**")
-    md.append("- Median (~35 days) shows half of tickets resolve in about a month.")
-    md.append("- Average (~163 days) sits in the “Good” band (61–180 days).")
-    md.append("- P90 (~446 days) exceeds one year, so anything > 365 days is flagged as “Needs Improvement.”\n")
-
+    
+    # Other breakdowns
+    render_breakdown("Breakdown by WG Name", "WG Name")
+    render_breakdown("Breakdown by Specification", "Specification Display Name")
+    render_breakdown("Breakdown by Product Family", "Product Family")
+    
     return "\n".join(md)
 
 def main():
     parser = argparse.ArgumentParser(
-        description="Analyze issue resolutions and generate a markdown summary report with TOC, median, and P90."
+        description="Analyze issue resolutions and generate a markdown summary report with TOC, median, and P80."
     )
-    parser.add_argument("-i","--input", required=True, help="Input CSV file path")
-    parser.add_argument("-o","--output", required=True, help="Output Markdown file path")
+    parser.add_argument("-i", "--input", required=True, help="Input CSV file path")
+    parser.add_argument("-o", "--output", required=True, help="Output Markdown file path")
+    parser.add_argument("-p", "--periods", required=True, nargs="+", 
+                       help="Analysis periods in format 'YYYY' (full year) or 'YYYYT[1-3]' (period)")
+    
     args = parser.parse_args()
-
+    
+    # Load data
+    print(f"Loading data from {args.input}")
     df = pd.read_csv(args.input)
     df.columns = df.columns.str.strip()
+    
+    # Handle column name variations
     if 'WG Name' not in df.columns and 'WG' in df.columns:
         df.rename(columns={'WG':'WG Name'}, inplace=True)
     if 'Specification Display Name' not in df.columns and 'Specification' in df.columns:
         df.rename(columns={'Specification':'Specification Display Name'}, inplace=True)
-
-    df = process_data(df)
-    report = generate_summary_markdown(df)
-
-    with open(args.output,"w") as f:
+    
+    # Process data
+    print(f"Processing data for periods: {', '.join(args.periods)}")
+    df = process_data(df, args.periods)
+    
+    # Generate report
+    print("Generating report")
+    report = generate_report(df, args.periods)
+    
+    # Save report
+    print(f"Writing report to {args.output}")
+    with open(args.output, "w") as f:
         f.write(report)
-    print(f"Report written to {args.output}")
+    
+    print("Done!")
 
-if __name__=="__main__":
+if __name__ == "__main__":
     main()

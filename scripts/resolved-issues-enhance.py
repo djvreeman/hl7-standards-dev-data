@@ -1,4 +1,56 @@
 #!/usr/bin/env python3
+
+"""
+HL7 JIRA Issue Enhancer
+-----------------------
+
+This script processes a CSV file containing HL7 JIRA issues and enhances it with additional
+metadata such as specification details, workgroup information, and realm (country/region) data.
+
+USAGE NOTES:
+------------
+1. Purpose: Enrich HL7 JIRA issue data with metadata to enable better analytics and
+   reporting, particularly for realm/region identification and workgroup tracking.
+
+2. Requirements:
+   - Python 3.6+
+   - Required packages: pandas, requests, selenium, webdriver_manager
+   - Chrome browser (for headless web scraping to extract realm information)
+   - Internet connection to access GitHub repositories and HL7 resources
+
+3. Basic Usage:
+   python enhance_jira.py -i INPUT_FILE.csv [-o OUTPUT_FILE.csv] [-m REALM_MAPPINGS.csv]
+
+4. Arguments:
+   - -i, --input: Path to input CSV file containing JIRA issues (required)
+   - -o, --output: Path for enhanced output CSV file (optional, auto-generated if omitted)
+   - -m, --mapping: Path to realm mapping file that serves as both lookup and cache (optional, default: realm_mappings.csv)
+
+5. What This Script Does:
+   - Adds specification display names from HL7's SPECS.json
+   - Determines realm/region information using several methods:
+     * Specified mapping file (for known specifications)
+     * URL pattern analysis (FHIR US/UV detection)
+     * Web scraping product briefs for REALM information
+     * Caching previously discovered realms for efficiency
+   - Adds workgroup names based on JIRA workgroup keys
+   - Calculates timing metrics like 'Days to Resolution'
+   - Adds month-based aggregation fields for trend analysis
+
+6. Output Enhancements:
+   - Specification Display Name: Human-readable specification name
+   - Realm: Geographic region (United States, Universal, etc.)
+   - WG Name: Full workgroup name
+   - Days to Resolution: Time between creation and resolution
+   - Creation/Resolution Month: YYYY-MM format for temporal analysis
+
+7. Notes:
+   - Uses and maintains a single mapping file that serves as both lookup and cache
+   - Special handling for V2 Core specifications
+   - Provides console feedback on realm resolution success/failure
+   - Automatically reorders columns for logical grouping
+"""
+
 import argparse
 import os
 import pandas as pd
@@ -23,29 +75,75 @@ def format_iso_timestamp(timestamp):
         timestamp = timestamp.replace("Z", "+00:00")
     return timestamp
 
-def load_realm_lookup(lookup_file):
+def load_realm_mappings(mapping_file):
     """
-    Load realm lookup data from CSV file.
+    Load realm mappings from a single CSV file that serves as both
+    lookup and cache.
     
     Args:
-        lookup_file (str): Path to the lookup CSV file.
+        mapping_file (str): Path to the mapping CSV file.
     
     Returns:
-        dict: Dictionary mapping keys to realms.
+        tuple: (spec_to_realm, url_to_realm) dictionaries for lookups
     """
-    if not lookup_file:
-        return {}
+    spec_to_realm = {}
+    url_to_realm = {}
+    
+    if not mapping_file or not os.path.exists(mapping_file):
+        return (spec_to_realm, url_to_realm)
+        
     try:
-        lookup_df = pd.read_csv(lookup_file)
-        if 'key' not in lookup_df.columns or 'realm' not in lookup_df.columns:
-            print(f"Warning: Lookup file {lookup_file} is missing 'key' or 'realm' columns")
-            return {}
-        realm_lookup = dict(zip(lookup_df['key'], lookup_df['realm']))
-        print(f"Loaded {len(realm_lookup)} realm mappings from {lookup_file}")
-        return realm_lookup
+        df_mappings = pd.read_csv(mapping_file)
+        # Process specification key mappings
+        if 'key' in df_mappings.columns and 'realm' in df_mappings.columns:
+            for idx, row in df_mappings.iterrows():
+                key_val = row.get('key')
+                if pd.notna(key_val) and str(key_val).strip() != "":
+                    spec_to_realm[str(key_val).strip()] = str(row.get('realm')).strip() if pd.notna(row.get('realm')) else None
+        
+        # Process URL mappings
+        if 'url' in df_mappings.columns and 'realm' in df_mappings.columns:
+            for idx, row in df_mappings.iterrows():
+                url_val = row.get('url')
+                if pd.notna(url_val) and str(url_val).strip() != "":
+                    url_to_realm[str(url_val).strip()] = str(row.get('realm')).strip() if pd.notna(row.get('realm')) else None
+        
+        print(f"Loaded {len(spec_to_realm)} specification mappings and {len(url_to_realm)} URL mappings from {mapping_file}")
+        return (spec_to_realm, url_to_realm)
     except Exception as e:
-        print(f"Error loading realm lookup file: {e}")
-        return {}
+        print(f"Error loading mappings from {mapping_file}: {e}")
+        return ({}, {})
+
+def save_realm_mappings(spec_to_realm, url_to_realm, mapping_file):
+    """
+    Save realm mappings to a single CSV file that serves as both
+    lookup and cache.
+    
+    Args:
+        spec_to_realm (dict): Mapping of specification keys to realms.
+        url_to_realm (dict): Mapping of URLs to realms.
+        mapping_file (str): Path to the mapping CSV file.
+    """
+    try:
+        # Ensure the directory exists
+        mapping_dir = os.path.dirname(mapping_file)
+        if mapping_dir and not os.path.exists(mapping_dir):
+            os.makedirs(mapping_dir)
+            
+        rows = []
+        # Add specification key mappings
+        for key, realm in spec_to_realm.items():
+            rows.append({'key': key, 'url': '', 'realm': realm})
+        
+        # Add URL mappings
+        for url, realm in url_to_realm.items():
+            rows.append({'key': '', 'url': url, 'realm': realm})
+        
+        df_mappings = pd.DataFrame(rows, columns=['key', 'url', 'realm'])
+        df_mappings.to_csv(mapping_file, index=False)
+        print(f"Saved {len(spec_to_realm)} specification mappings and {len(url_to_realm)} URL mappings to {mapping_file}")
+    except Exception as e:
+        print(f"Error saving mappings to {mapping_file}: {e}")
 
 def load_specs_json(url):
     """
@@ -128,54 +226,6 @@ def build_specs_lookup(specs_data):
             lookup[key] = spec
     return lookup
 
-# --- Cache Helper Functions ---
-def load_realm_cache(cache_file='realm_cache.csv'):
-    """
-    Load the realm cache from a local CSV file (if it exists).
-    Supports manual overrides keyed by 'key' and URL mappings keyed by 'url'.
-    Returns a tuple: (manual_override, url_mapping) where each is a dict.
-    """
-    manual_override = {}
-    url_mapping = {}
-    if os.path.exists(cache_file):
-        try:
-            df_cache = pd.read_csv(cache_file)
-            if 'key' in df_cache.columns:
-                for idx, row in df_cache.iterrows():
-                    key_val = row.get('key')
-                    if pd.notna(key_val) and str(key_val).strip() != "":
-                        manual_override[str(key_val).strip()] = str(row.get('realm')).strip() if pd.notna(row.get('realm')) else None
-            if 'url' in df_cache.columns:
-                for idx, row in df_cache.iterrows():
-                    url_val = row.get('url')
-                    if pd.notna(url_val) and str(url_val).strip() != "":
-                        url_mapping[str(url_val).strip()] = str(row.get('realm')).strip() if pd.notna(row.get('realm')) else None
-            return (manual_override, url_mapping)
-        except Exception as e:
-            print(f"Error loading realm cache from {cache_file}: {e}")
-            return ({}, {})
-    else:
-        return ({}, {})
-
-def save_realm_cache(manual_override, url_mapping, cache_file='realm_cache.csv'):
-    """
-    Save the realm cache dictionaries to a CSV file with columns 'key', 'url', and 'realm'.
-    For manual override entries, 'url' is left blank.
-    For URL mappings, 'key' is left blank.
-    """
-    try:
-        rows = []
-        for key, realm in manual_override.items():
-            rows.append({'key': key, 'url': '', 'realm': realm})
-        for url, realm in url_mapping.items():
-            rows.append({'key': '', 'url': url, 'realm': realm})
-        df_cache = pd.DataFrame(rows, columns=['key', 'url', 'realm'])
-        df_cache.to_csv(cache_file, index=False)
-    except Exception as e:
-        print(f"Error saving realm cache to {cache_file}: {e}")
-# --- End Cache Helper Functions ---
-
-# --- Workgroup Lookup Functions ---
 def load_workgroups_json(url):
     """
     Download and return the workgroups JSON data from the given URL.
@@ -214,18 +264,20 @@ def build_workgroup_lookup(workgroups_data):
             lookup[key] = html.unescape(name)
     return lookup
 
-def process_csv(input_file, output_file=None, lookup_file=None):
+def process_csv(input_file, output_file=None, mapping_file='realm_mappings.csv'):
     """
     Process a CSV file containing JIRA issues and add additional metrics.
     
     Args:
         input_file (str): Path to the input CSV file.
         output_file (str, optional): Path for the output file. If None, auto-generated.
-        lookup_file (str, optional): Path to the realm lookup CSV file. If None, no realm mapping.
+        mapping_file (str, optional): Path to the combined lookup/cache file. 
+                                     Default is 'realm_mappings.csv'.
     
     Returns:
         str: Path to the enhanced output file.
     """
+    # Generate output file name if not provided
     if output_file is None:
         directory = os.path.dirname(input_file)
         filename = os.path.basename(input_file)
@@ -234,15 +286,29 @@ def process_csv(input_file, output_file=None, lookup_file=None):
     
     df = pd.read_csv(input_file)
     
-    # Load realm lookup if provided
-    realm_lookup = load_realm_lookup(lookup_file)
-    if realm_lookup and 'Specification' in df.columns:
+    # Error corrections
+    
+    # Error correction 1: Change Specification to "V2-lri" for Issue "V2-25638"
+    if 'Issue' in df.columns and 'Specification' in df.columns:
+        df.loc[df['Issue'] == 'V2-25638', 'Specification'] = 'V2-lri'
+        print("Applied error correction: Updated Specification to 'V2-lri' for Issue 'V2-25638'")
+    
+    # Error correction 2: Assign WG "v2mg" for Issue "V2-15528" 
+    if 'Issue' in df.columns and 'WG' in df.columns:
+        df.loc[df['Issue'] == 'V2-15528', 'WG'] = 'v2mg'
+        print("Applied error correction: Updated WG to 'v2mg' for Issue 'V2-15528'")
+    
+    # Load combined mappings
+    spec_to_realm, url_to_realm = load_realm_mappings(mapping_file)
+    
+    # Apply specification-based realm mapping
+    if 'Specification' in df.columns:
         def get_realm(specification):
             if pd.isna(specification) or not specification:
                 return None
-            return realm_lookup.get(specification, None)
+            return spec_to_realm.get(specification, None)
         df['Realm'] = df['Specification'].apply(get_realm)
-        print(f"Added realm information to {df['Realm'].notna().sum()} records")
+        print(f"Added realm information to {df['Realm'].notna().sum()} records from specification mappings")
     
     # Enhance CSV with Specification Display Name from SPECS.json
     if 'Specification' in df.columns:
@@ -270,15 +336,14 @@ def process_csv(input_file, output_file=None, lookup_file=None):
             
             # Determine REALM information using SPECS.json and associated URL
             specs_lookup = build_specs_lookup(specs_data)
-            manual_override, url_mapping = load_realm_cache()  # Load manual and URL caches
             failed_urls = set()
             def get_resolved_realm(specification):
                 if pd.isna(specification) or not specification:
                     return None
-                # Check for manual override based on SPECS.json key
-                if specification in manual_override:
-                    print(f"Using manual override for spec '{specification}'")
-                    return manual_override[specification]
+                # Check for specification key in our mapping
+                if specification in spec_to_realm:
+                    print(f"Using existing mapping for spec '{specification}'")
+                    return spec_to_realm[specification]
                 spec_obj = specs_lookup.get(specification)
                 if not spec_obj:
                     return None
@@ -287,31 +352,57 @@ def process_csv(input_file, output_file=None, lookup_file=None):
                     # Handle FHIR URL patterns
                     if url.startswith("http://hl7.org/fhir/uv/"):
                         print(f"Detected FHIR UV URL for {url}, returning 'Universal'")
-                        return "Universal"
+                        realm_val = "Universal"
+                        # Add to mappings
+                        spec_to_realm[specification] = realm_val
+                        save_realm_mappings(spec_to_realm, url_to_realm, mapping_file)
+                        return realm_val
                     elif url.startswith("http://hl7.org/fhir/us/"):
                         print(f"Detected FHIR US URL for {url}, returning 'United States'")
-                        return "United States"
+                        realm_val = "United States"
+                        # Add to mappings
+                        spec_to_realm[specification] = realm_val
+                        save_realm_mappings(spec_to_realm, url_to_realm, mapping_file)
+                        return realm_val
                     elif url == "http://hl7.org/fhir":
                         print(f"Detected exact FHIR URL for {url}, returning 'Universal'")
-                        return "Universal"
+                        realm_val = "Universal"
+                        # Add to mappings
+                        spec_to_realm[specification] = realm_val
+                        save_realm_mappings(spec_to_realm, url_to_realm, mapping_file)
+                        return realm_val
                     # Handle specific CDA URL patterns
                     if url.startswith("http://hl7.org/cda/us/"):
                         print(f"Detected CDA US URL for {url}, returning 'United States'")
-                        return "United States"
+                        realm_val = "United States"
+                        # Add to mappings
+                        spec_to_realm[specification] = realm_val
+                        save_realm_mappings(spec_to_realm, url_to_realm, mapping_file)
+                        return realm_val
                     elif url.startswith("http://hl7.org/cda/stds/"):
                         print(f"Detected CDA STDS URL for {url}, returning 'Universal'")
-                        return "Universal"
+                        realm_val = "Universal"
+                        # Add to mappings
+                        spec_to_realm[specification] = realm_val
+                        save_realm_mappings(spec_to_realm, url_to_realm, mapping_file)
+                        return realm_val
                     # Otherwise, if it's a product brief URL containing '?product_id='
                     elif '?product_id=' in url:
-                        if url in url_mapping:
+                        if url in url_to_realm:
                             print(f"Using cached realm for URL: {url}")
-                            return url_mapping[url]
+                            realm_val = url_to_realm[url]
+                            # Also add to specification mapping
+                            spec_to_realm[specification] = realm_val
+                            save_realm_mappings(spec_to_realm, url_to_realm, mapping_file)
+                            return realm_val
                         else:
                             print(f"Processing URL: {url}")
                             realm_val = extract_realm_from_url(url)
                             if realm_val is not None:
-                                url_mapping[url] = realm_val
-                                save_realm_cache(manual_override, url_mapping)
+                                # Update both dictionaries
+                                url_to_realm[url] = realm_val
+                                spec_to_realm[specification] = realm_val
+                                save_realm_mappings(spec_to_realm, url_to_realm, mapping_file)
                             else:
                                 failed_urls.add(url)
                             return realm_val
@@ -387,7 +478,7 @@ def process_csv(input_file, output_file=None, lookup_file=None):
     df['Resolution Month'] = df['Resolution Date'].apply(extract_month_year)
     
     # Output Specifications with no realm identified
-    unresolved_specs = df.loc[df['Resolved Realm'].isna(), 'Specification'].unique()
+    unresolved_specs = df.loc[(df['Resolved Realm'].isna()) & (df['Specification'].notna()), 'Specification'].unique()
     if unresolved_specs.size > 0:
         print("The following Specifications did not yield any Realm:")
         for spec in unresolved_specs:
@@ -401,9 +492,10 @@ def main():
     parser = argparse.ArgumentParser(description='Process JIRA issues CSV file and add additional metrics.')
     parser.add_argument('-i', '--input', required=True, help='Input CSV file path')
     parser.add_argument('-o', '--output', help='Output CSV file path (optional)')
-    parser.add_argument('-l', '--lookup', help='Realm lookup CSV file path (optional)')
+    parser.add_argument('-m', '--mapping', default='realm_mappings.csv', 
+                        help='Realm mapping file path for lookup and cache (optional, default: realm_mappings.csv)')
     args = parser.parse_args()
-    output_file = process_csv(args.input, args.output, args.lookup)
+    output_file = process_csv(args.input, args.output, args.mapping)
     print(f"Processed CSV saved to: {output_file}")
 
 if __name__ == '__main__':

@@ -1,3 +1,49 @@
+"""
+Federal Register Citation Fetcher
+--------------------------------
+
+This script searches the U.S. Federal Register for documents matching specific keywords
+and exports the results to both CSV and RIS (citation) formats.
+
+USAGE NOTES:
+------------
+1. Purpose: Search and extract policy documents from the Federal Register API that
+   mention specified healthcare interoperability terms (like HL7, FHIR).
+
+2. Requirements:
+   - Python 3.6+
+   - Required packages: requests, pandas, re, datetime
+   - Internet connection to access the Federal Register API
+
+3. Basic Usage:
+   python fetch_federal_register.py "KEYWORD1" "KEYWORD2" --start_date YYYY-MM-DD --end_date YYYY-MM-DD
+
+4. Examples:
+   # Search for FHIR and HL7 mentions in 2023
+   python fetch_federal_register.py "FHIR" "HL7" --start_date 2023-01-01 --end_date 2023-12-31
+   
+   # Search for exact phrase with multiple keywords
+   python fetch_federal_register.py "Health Level Seven" "FHIR" --output_folder ./policy_tracking
+
+5. Arguments:
+   - keywords: One or more search terms (required)
+   - --start_date: Start date for search period (default: 2023-01-01)
+   - --end_date: End date for search period (default: today)
+   - --output_folder: Where to save results (default: ./federal_register_results)
+   - --debug: Enable detailed API response debugging
+
+6. Output Files:
+   - CSV file with all citations
+   - Individual RIS citation files (named by document number)
+   - Combined RIS file with all citations
+
+7. Notes:
+   - For multi-word phrases, the script automatically adds quotes for exact matching
+   - Rate limiting is implemented to prevent API timeout
+   - Agency information is extracted using multiple methods for better accuracy
+   - United States is automatically added as a keyword to all RIS exports
+"""
+
 import requests
 import pandas as pd
 import os

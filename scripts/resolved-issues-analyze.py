@@ -3,7 +3,22 @@ import argparse
 import pandas as pd
 import numpy as np
 import re
+import yaml
 from datetime import datetime
+import os
+
+def load_staff_config(config_path):
+    """Load HL7 staff configuration from YAML file"""
+    if os.path.exists(config_path):
+        try:
+            with open(config_path, 'r') as file:
+                return yaml.safe_load(file)
+        except Exception as e:
+            print(f"Warning: Could not load staff config file: {e}")
+            return []
+    else:
+        print(f"Warning: Staff config file not found at {config_path}")
+        return []
 
 def parse_time_period(period_str):
     """Parse a time period string like '2025T1' or '2024' into start and end dates"""
@@ -193,41 +208,62 @@ def get_performance_band(p80_value):
     else:
         return "Needs Improvement"
 
-def analyze_submitters(df, period_str):
-    """Analyze issue submitters for a specific period"""
+def analyze_submitters(df, period_str, staff_list):
+    """Analyze issue reporters for a specific period"""
     start_date, end_date, label = parse_time_period(period_str)
     
-    # Get all submitters ever
-    all_submitters = set(df['Reporter'].dropna().unique())
-    total_submitters_ever = len(all_submitters)
+    # Get earliest date in the dataset
+    earliest_date = df['Created Date'].min()
     
-    # Get submitters before this period
+    # Get all data from start of dataset through end of analysis period
+    historical_mask = (df['Created Date'] >= earliest_date) & (df['Created Date'] <= end_date)
+    historical_df = df[historical_mask]
+    
+    # Get all reporters through the end of the analysis period
+    all_reporters = set(historical_df['Reporter'].dropna().unique())
+    total_reporters_ever = len(all_reporters)
+    
+    # Get reporters before this period
     before_period_mask = df['Created Date'] < start_date
-    before_period_submitters = set(df.loc[before_period_mask, 'Reporter'].dropna().unique())
+    before_period_reporters = set(df.loc[before_period_mask, 'Reporter'].dropna().unique())
     
-    # Get submitters in this period
+    # Get reporters in this period
     period_mask = (df['Created Date'] >= start_date) & (df['Created Date'] <= end_date)
-    period_submitters = set(df.loc[period_mask, 'Reporter'].dropna().unique())
-    total_submitters_in_period = len(period_submitters)
+    period_reporters = set(df.loc[period_mask, 'Reporter'].dropna().unique())
+    total_reporters_in_period = len(period_reporters)
     
-    # Find new submitters in this period
-    new_submitters = period_submitters - before_period_submitters
-    total_new_submitters = len(new_submitters)
+    # Find new reporters in this period
+    new_reporters = period_reporters - before_period_reporters
+    total_new_reporters = len(new_reporters)
     
-    # Calculate percentage of new submitters relative to this period
-    if total_submitters_in_period > 0:
-        new_submitter_percent = (total_new_submitters / total_submitters_in_period) * 100
+    # Calculate percentage of new reporters relative to this period
+    if total_reporters_in_period > 0:
+        new_reporter_percent = (total_new_reporters / total_reporters_in_period) * 100
     else:
-        new_submitter_percent = 0
+        new_reporter_percent = 0
+    
+    # Get top reporters during this period (excluding staff)
+    period_reporter_counts = df[period_mask].groupby('Reporter').size().reset_index(name='Issue Count')
+    period_reporter_counts = period_reporter_counts[~period_reporter_counts['Reporter'].isin(staff_list)]
+    period_reporter_counts = period_reporter_counts.sort_values(by='Issue Count', ascending=False)
+    top_period_reporters = period_reporter_counts.head(10)
+    
+    # Get top reporters of all time through end of analysis period (excluding staff)
+    all_time_reporter_counts = historical_df.groupby('Reporter').size().reset_index(name='Issue Count')
+    all_time_reporter_counts = all_time_reporter_counts[~all_time_reporter_counts['Reporter'].isin(staff_list)]
+    all_time_reporter_counts = all_time_reporter_counts.sort_values(by='Issue Count', ascending=False)
+    top_all_time_reporters = all_time_reporter_counts.head(10)
     
     return {
-        'total_submitters_ever': total_submitters_ever,
-        'total_submitters_in_period': total_submitters_in_period,
-        'total_new_submitters': total_new_submitters,
-        'new_submitter_percent': new_submitter_percent
+        'total_reporters_ever': total_reporters_ever,
+        'total_reporters_in_period': total_reporters_in_period,
+        'total_new_reporters': total_new_reporters,
+        'new_reporter_percent': new_reporter_percent,
+        'top_period_reporters': top_period_reporters,
+        'top_all_time_reporters': top_all_time_reporters
     }
 
-def generate_report(df, analysis_periods):
+def generate_report(df, analysis_periods, staff_list):
     """Generate full markdown report"""
     md = []
     
@@ -248,9 +284,11 @@ def generate_report(df, analysis_periods):
     
     for period in analysis_periods:
         _, _, label = parse_time_period(period)
-        md.append(f"- [Breakdown by Period within {label}](#breakdown-by-period-within-{label.lower()})")
+        # Fix anchor links - converting to lowercase and replacing spaces with hyphens
+        anchor = f"breakdown-by-period-within-{label.lower()}"
+        md.append(f"- [Breakdown by Period within {label}](#{anchor})")
     
-    md.append("- [Issue Submitters](#issue-submitters)")
+    md.append("- [Issue Reporters](#issue-reporters)")
     md.append("- [Breakdown by Realm](#breakdown-by-realm)")
     md.append("- [Breakdown by WG Name and Realm](#breakdown-by-wg-name-and-realm)")
     md.append("- [Breakdown by WG Name](#breakdown-by-wg-name)")
@@ -365,22 +403,56 @@ def generate_report(df, analysis_periods):
         
         md.append("")
     
-    # New section - Issue Submitters Analysis
-    md.append("## Issue Submitters\n")
+    # Issue Reporters Analysis
+    md.append("## Issue Reporters\n")
     
-    # Issue Submitters table
-    md.append("| Period | Total Submitters | New Submitters | % New Submitters |")
-    md.append("|--------|------------------|----------------|------------------|")
+    # Issue Reporters summary table
+    md.append("### Reporter Summary\n")
+    md.append("| Period | Total Reporters | New Reporters | % New Reporters |")
+    md.append("|--------|------------------|----------------|-----------------|")
     
     # For each analysis period
     for period in analysis_periods:
         _, _, label = parse_time_period(period)
-        submitter_data = analyze_submitters(df, period)
+        reporter_data = analyze_submitters(df, period, staff_list)
         
         # Calculate percentage with proper precision
-        percent_new = f"{submitter_data['new_submitter_percent']:.1f}%"
+        percent_new = f"{reporter_data['new_reporter_percent']:.1f}%"
         
-        md.append(f"| {label} | {submitter_data['total_submitters_in_period']} | {submitter_data['total_new_submitters']} | {percent_new} |")
+        md.append(f"| {label} | {reporter_data['total_reporters_in_period']} | {reporter_data['total_new_reporters']} | {percent_new} |")
+    
+    md.append("")
+    
+    # Only add leaderboards for the primary analysis period
+    primary_period = analysis_periods[0]
+    _, _, label = parse_time_period(primary_period)
+    reporter_data = analyze_submitters(df, primary_period, staff_list)
+    
+    # Get end date for the all-time title
+    _, end_date, _ = parse_time_period(primary_period)
+    end_date_str = end_date.strftime('%B %d, %Y')
+    
+    # Top reporters for this period
+    md.append(f"### Top Reporters for {label}\n")
+    md.append("| Rank | Reporter | Issue Count |")
+    md.append("|------|----------|-------------|")
+    
+    for i, (_, row) in enumerate(reporter_data['top_period_reporters'].iterrows(), 1):
+        reporter = row['Reporter'] if pd.notnull(row['Reporter']) else "Unknown"
+        count = int(row['Issue Count'])
+        md.append(f"| {i} | {reporter} | {count} |")
+    
+    md.append("")
+    
+    # Top reporters of all time (through end of analysis period)
+    md.append(f"### Top Reporters (Through {end_date_str})\n")
+    md.append("| Rank | Reporter | Issue Count |")
+    md.append("|------|----------|-------------|")
+    
+    for i, (_, row) in enumerate(reporter_data['top_all_time_reporters'].iterrows(), 1):
+        reporter = row['Reporter'] if pd.notnull(row['Reporter']) else "Unknown"
+        count = int(row['Issue Count'])
+        md.append(f"| {i} | {reporter} | {count} |")
     
     md.append("")
     
@@ -466,8 +538,20 @@ def main():
     parser.add_argument("-o", "--output", required=True, help="Output Markdown file path")
     parser.add_argument("-p", "--periods", required=True, nargs="+", 
                        help="Analysis periods in format 'YYYY' (full year) or 'YYYYT[1-3]' (period)")
+    parser.add_argument("-s", "--staff-config", default="data/working/config/hl7-staff.yaml",
+                       help="Path to HL7 staff configuration file")
     
     args = parser.parse_args()
+    
+    # Load staff configuration
+    print(f"Loading staff configuration from {args.staff_config}")
+    staff_config = load_staff_config(args.staff_config)
+    staff_list = []
+    if staff_config:
+        # Extract staff display names (Reporter field)
+        for staff in staff_config:
+            if 'display_name' in staff:
+                staff_list.append(staff['display_name'])
     
     # Load data
     print(f"Loading data from {args.input}")
@@ -486,7 +570,7 @@ def main():
     
     # Generate report
     print("Generating report")
-    report = generate_report(df, args.periods)
+    report = generate_report(df, args.periods, staff_list)
     
     # Save report
     print(f"Writing report to {args.output}")

@@ -51,7 +51,7 @@ field_mappings = {
     'fields.customfield_13704.value': 'Realm',
     'fields.customfield_10612': 'Related URL',
     'fields.customfield_10618': 'Resolution',
-    'fields.creator.displayName': 'Reporter',
+    'fields.creator.displayName': 'Creator',
     'fields.customfield_13714.displayName': 'Project Facilitator',
     'fields.customfield_13716.displayName': 'Publishing Facilitator',
     'fields.customfield_12316': 'Approval Date',
@@ -59,6 +59,8 @@ field_mappings = {
     'fields.resolutiondate': 'Resolution Date',
     'fields.created': 'Created Date',
     'fields.customfield_11400': 'WG',
+    'fields.reporter.displayName': 'Reporter',
+    'fields.reporter.name': 'Reporter ID',
     # Placeholder fields for post-hoc processing
     'fields.family': 'Product Family',
     'fields.calculated_days_to_res': 'Days to Resolution', # Derived field to be calculated post-hoc

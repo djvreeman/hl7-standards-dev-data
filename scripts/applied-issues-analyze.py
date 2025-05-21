@@ -1,4 +1,58 @@
 #!/usr/bin/env python3
+# =============================================================================
+# Issue Application Metrics Analyzer and Markdown Report Generator
+#
+# This script analyzes HL7 JIRA issue data to evaluate how efficiently 
+# issues are moved through the application process (e.g., to 'Applied' status).
+#
+# It computes time-to-resolution statistics, backlog volumes, submitter 
+# behavior, and performance banding across user-defined time periods.
+#
+# === Input Requirements ===
+# - A CSV file exported from HL7 JIRA (via parse-jira-filter-export-csv-md.py)
+#   that includes:
+#     - Created Date
+#     - Applied Date (optional but preferred)
+#     - Current Status or status
+#     - Issue Type, Specification, WG Name, Realm, etc. (for breakdowns)
+#
+# === Configuration File ===
+# - Optional YAML file of HL7 staff members used to exclude staff from 
+#   reporter analysis. Defaults to: data/working/config/hl7-staff.yaml
+#
+# === Period Format ===
+# Periods must be specified in one of the following formats:
+#   - 'YYYY'           → Full year (e.g., 2024)
+#   - 'YYYYT[1-3]'     → Tri-year quarter (e.g., 2024T2)
+#   - 'YYYY[-T[1-3]]-YYYY[-T[1-3]]' → Ranges (e.g., 2023T2–2024T1)
+#
+# === Output ===
+# - A Markdown report file containing:
+#     - Overall summary and performance bands
+#     - Time-based breakdowns (T1, T2, T3)
+#     - Reporter and applier leaderboards
+#     - Status distribution, issue types, and resolution-to-application gaps
+#     - Breakdowns by Work Group, Realm, Specification, and Product Family
+#     - Mermaid diagram of the JIRA workflow
+#
+# === Example Usage ===
+# python analyze-applied-issues.py \
+#     -i data/input/jira_issues.csv \
+#     -o reports/2025T1_applied_issues.md \
+#     -p 2025T1 \
+#     -s data/working/config/hl7-staff.yaml
+#
+# === Dependencies ===
+# - pandas
+# - numpy
+# - pyyaml
+#
+# === Author ===
+#   Daniel J. Vreeman, PT, DPT, MS, FACMI, FIAHSI
+#   HL7 International
+# =============================================================================
+
+
 import argparse
 import pandas as pd
 import numpy as np
@@ -88,15 +142,91 @@ def get_tri_section(month_num):
     else:
         return "Unknown"
 
+# NEW: Define JIRA workflow status information
+def get_jira_workflow_info():
+    """Return information about JIRA workflow statuses and transitions."""
+    # Status IDs and names from the JIRA workflow
+    statuses = {
+        '10101': 'Submitted',
+        '10102': 'Triaged',
+        '10103': 'Waiting for Input',
+        '10104': 'Resolved - No Change',
+        '10105': 'Resolved - change required',
+        '10306': 'Deferred',
+        '10106': 'Duplicate',
+        '10107': 'Applied',
+        '10108': 'Published'
+    }
+    
+    # Define which statuses can potentially lead to Applied
+    # Based on the workflow, only issues with "Resolved - change required" status
+    # are expected to eventually be "Applied"
+    can_be_applied = ['10105']  # Resolved - change required
+    
+    # Define terminal statuses (endpoints in the workflow)
+    terminal_statuses = ['10104', '10306', '10106', '10107', '10108']  # Resolved - No Change, Deferred, Duplicate, Applied, Published
+    
+    # Define "Done" statuses (statuses in the "Done" category)
+    done_statuses = ['10104', '10306', '10106', '10107', '10108']  # All terminal statuses
+    
+    return {
+        'statuses': statuses,
+        'can_be_applied': can_be_applied,
+        'terminal_statuses': terminal_statuses,
+        'done_statuses': done_statuses
+    }
+
 def process_data(df, analysis_periods):
     """Process dataframe and add analysis fields"""
+    # Get workflow info
+    workflow_info = get_jira_workflow_info()
+    
     # Convert dates to datetime with UTC timezone
     df['Created Date'] = pd.to_datetime(df['Created Date'], errors='coerce', utc=True)
-    df['Resolution Date'] = pd.to_datetime(df['Resolution Date'], errors='coerce', utc=True)
+    
+    # Store original Resolution Date if it exists
+    if 'Resolution Date' in df.columns:
+        df['Original Resolution Date'] = df['Resolution Date']
+        df['Original Resolution Date'] = pd.to_datetime(df['Original Resolution Date'], errors='coerce', utc=True)
+    
+    # Use Applied Date as the primary resolution date
+    if 'Applied Date' in df.columns:
+        df['Resolution Date'] = pd.to_datetime(df['Applied Date'], errors='coerce', utc=True)
+        print("Using 'Applied Date' from history records as the resolution date")
+    else:
+        print("WARNING: 'Applied Date' column not found. This script is designed to analyze applied dates.")
+        if 'Resolution Date' not in df.columns:
+            print("ERROR: Neither 'Applied Date' nor 'Resolution Date' found. Cannot continue.")
+            return None
     
     # Add basic derived fields
     df['is_resolved'] = df['Resolution Date'].notnull()
     df['days_to_resolution'] = (df['Resolution Date'] - df['Created Date']).dt.total_seconds() / 86400.0
+    
+    # NEW: Add status information based on history data
+    # Check if we have status information in the data
+    if 'Current Status' in df.columns:
+        df['Status'] = df['Current Status']
+    elif 'status' in df.columns:
+        df['Status'] = df['status']
+    else:
+        # If no explicit status column, infer from Applied Date
+        df['Status'] = None
+        print("WARNING: No status column found. Status will be inferred from Applied Date.")
+        # Infer Applied status for issues with Applied Date
+        mask_applied = df['Applied Date'].notna()
+        df.loc[mask_applied, 'Status'] = 'Applied'
+    
+    # NEW: Add flag indicating if an issue can be applied (in "Resolved - change required" status)
+    df['can_be_applied'] = df['Status'].isin(workflow_info['can_be_applied'])
+    
+    # NEW: Calculate resolution to application time if we have both dates
+    if 'Original Resolution Date' in df.columns and 'Applied Date' in df.columns:
+        mask = df['Original Resolution Date'].notna() & df['Applied Date'].notna()
+        df.loc[mask, 'days_from_resolution_to_application'] = (
+            pd.to_datetime(df.loc[mask, 'Applied Date']) - 
+            pd.to_datetime(df.loc[mask, 'Original Resolution Date'])
+        ).dt.total_seconds() / 86400.0
     
     # Add month and period fields
     df['creation_month'] = df['Created Date'].dt.month
@@ -123,10 +253,13 @@ def process_data(df, analysis_periods):
             (df['Resolution Date'] <= end_date)
         )
         
-        # Backlog at end of period (created before or during, not resolved or resolved after)
+        # NEW: More precise backlog definition - issues that are expected to be applied
+        # This includes issues in "Resolved - change required" status or already Applied
+        # but not issues that have been marked as "No Change", "Deferred", or "Duplicate"
         df[f'backlog_at_{label}_end'] = (
             (df['Created Date'] <= end_date) & 
-            ((~df['is_resolved']) | (df['Resolution Date'] > end_date))
+            ((df['Status'].isin(workflow_info['can_be_applied'])) | 
+             ((~df['is_resolved']) & ~df['Status'].isin(workflow_info['terminal_statuses'])))
         )
     
     return df
@@ -195,8 +328,8 @@ def get_tri_metrics(df, tri_str):
     resolved_mask = df['is_resolved'] & (df['Resolution Date'] >= start_date) & (df['Resolution Date'] <= end_date)
     resolved = resolved_mask.sum()
     
-    # Backlog at end of period
-    backlog_mask = (df['Created Date'] <= end_date) & ((~df['is_resolved']) | (df['Resolution Date'] > end_date))
+    # Backlog at end of period - use the refined backlog definition
+    backlog_mask = df[f'backlog_at_{label}_end']
     backlog = backlog_mask.sum()
     
     # Resolution times
@@ -278,6 +411,192 @@ def analyze_submitters(df, period_str, staff_list):
         'top_all_time_reporters': top_all_time_reporters
     }
 
+def analyze_appliers(df, period_str):
+    """Analyze issue appliers for a specific period"""
+    if 'Applied User' not in df.columns:
+        return None
+        
+    start_date, end_date, label = parse_time_period(period_str)
+    
+    # Get issues applied in this period
+    period_mask = df['is_resolved'] & (df['Resolution Date'] >= start_date) & (df['Resolution Date'] <= end_date)
+    period_df = df[period_mask]
+    
+    # Get appliers for this period
+    applier_counts = period_df['Applied User'].value_counts().reset_index()
+    applier_counts.columns = ['Applier', 'Issue Count']
+    applier_counts = applier_counts.sort_values(by='Issue Count', ascending=False)
+    
+    return applier_counts
+
+# NEW: Analyze status distribution
+def analyze_status_distribution(df, period_str):
+    """Analyze the distribution of statuses for issues at the end of a period."""
+    _, end_date, label = parse_time_period(period_str)
+    
+    # Get workflow info
+    workflow_info = get_jira_workflow_info()
+    
+    # Get issues created before or during this period
+    issues_mask = df['Created Date'] <= end_date
+    
+    # Count by status
+    if 'Status' in df.columns:
+        status_counts = df[issues_mask]['Status'].value_counts()
+        
+        # Create a DataFrame with status names and counts
+        status_df = pd.DataFrame({
+            'Status': status_counts.index,
+            'Count': status_counts.values
+        })
+        
+        # Map status IDs to names if needed
+        if status_df['Status'].dtype == 'object' and status_df['Status'].str.isnumeric().any():
+            status_df['Status'] = status_df['Status'].map(
+                lambda x: workflow_info['statuses'].get(x, x) if isinstance(x, str) else x
+            )
+        
+        # Calculate percentage
+        total = status_df['Count'].sum()
+        status_df['Percentage'] = (status_df['Count'] / total * 100).round(1)
+        
+        # Sort by count
+        status_df = status_df.sort_values('Count', ascending=False)
+        
+        return status_df
+    else:
+        return None
+
+def analyze_issue_types(df, period_str):
+    """Analyze issue types for a specific period"""
+    start_date, end_date, label = parse_time_period(period_str)
+    
+    # Skip if the Issue Type column doesn't exist
+    if 'Issue Type' not in df.columns:
+        return None
+
+    # Get issues created in this period
+    period_mask = (df['Created Date'] >= start_date) & (df['Created Date'] <= end_date)
+    period_df = df[period_mask]
+    
+    # Get issues resolved in this period
+    resolved_mask = df['is_resolved'] & (df['Resolution Date'] >= start_date) & (df['Resolution Date'] <= end_date)
+    resolved_df = df[resolved_mask]
+    
+    # Count issues by type
+    issue_type_counts = period_df['Issue Type'].value_counts().reset_index()
+    issue_type_counts.columns = ['Issue Type', 'New Count']
+    
+    # Count resolved issues by type
+    resolved_counts = resolved_df['Issue Type'].value_counts().reset_index()
+    resolved_counts.columns = ['Issue Type', 'Resolved Count']
+    
+    # Calculate average resolution time by type
+    resolution_times = resolved_df.groupby('Issue Type')['days_to_resolution'].agg(['mean', 'median', 'count']).reset_index()
+    resolution_times.columns = ['Issue Type', 'Avg Days', 'Median Days', 'Resolved Count']
+    
+    # Merge the data
+    merged = pd.merge(issue_type_counts, resolution_times, on='Issue Type', how='outer')
+    
+    # Calculate backlog at end of period - use refined backlog definition
+    backlog_mask = df[f'backlog_at_{label}_end']
+    backlog_df = df[backlog_mask]
+    backlog_counts = backlog_df['Issue Type'].value_counts().reset_index()
+    backlog_counts.columns = ['Issue Type', 'Backlog Count']
+    
+    # Merge backlog data
+    merged = pd.merge(merged, backlog_counts, on='Issue Type', how='outer')
+    
+    # Fill NaN values with 0 for counts and N/A for time metrics
+    merged['New Count'] = merged['New Count'].fillna(0).astype(int)
+    merged['Resolved Count'] = merged['Resolved Count'].fillna(0).astype(int)
+    merged['Backlog Count'] = merged['Backlog Count'].fillna(0).astype(int)
+    
+    # Sort by New Count (descending)
+    merged = merged.sort_values(by='New Count', ascending=False)
+    
+    # Calculate P80 for each issue type
+    def calculate_p80(issue_type):
+        times = resolved_df.loc[resolved_df['Issue Type'] == issue_type, 'days_to_resolution']
+        if not times.empty and len(times) >= 5:  # Only calculate P80 if we have at least 5 data points
+            return times.quantile(0.8)
+        return None
+    
+    # Add P80 column
+    merged['P80 Days'] = merged['Issue Type'].apply(calculate_p80)
+    
+    # Add performance band
+    merged['Performance'] = merged['P80 Days'].apply(get_performance_band)
+    
+    return merged
+
+def analyze_resolution_to_application_gap(df, period_str):
+    """Analyze the gap between resolution and application for a specific period"""
+    if 'Applied Date' not in df.columns or 'Original Resolution Date' not in df.columns:
+        return None
+        
+    start_date, end_date, label = parse_time_period(period_str)
+    
+    # Get issues applied in this period
+    period_mask = df['is_resolved'] & (df['Resolution Date'] >= start_date) & (df['Resolution Date'] <= end_date)
+    period_df = df[period_mask]
+    
+    # Filter for issues with both dates
+    df_with_both = period_df[period_df['Original Resolution Date'].notna() & period_df['Applied Date'].notna()]
+    
+    if df_with_both.empty:
+        return None
+    
+    # Convert to datetime if needed
+    df_with_both['Original Resolution Date'] = pd.to_datetime(df_with_both['Original Resolution Date'], errors='coerce', utc=True)
+    df_with_both['Applied Date'] = pd.to_datetime(df_with_both['Applied Date'], errors='coerce', utc=True)
+    
+    # Calculate gap
+    df_with_both['days_from_resolution_to_application'] = (
+        df_with_both['Applied Date'] - df_with_both['Original Resolution Date']
+    ).dt.total_seconds() / 86400.0
+    
+    # Calculate statistics
+    gap_stats = {
+        'count': len(df_with_both),
+        'mean': df_with_both['days_from_resolution_to_application'].mean(),
+        'median': df_with_both['days_from_resolution_to_application'].median(),
+        'p80': df_with_both['days_from_resolution_to_application'].quantile(0.8),
+        'min': df_with_both['days_from_resolution_to_application'].min(),
+        'max': df_with_both['days_from_resolution_to_application'].max()
+    }
+    
+    return gap_stats
+
+# NEW: Generate workflow diagram in markdown
+def generate_workflow_diagram():
+    """Generate a mermaid diagram of the JIRA workflow."""
+    workflow_info = get_jira_workflow_info()
+    
+    # Define diagram
+    diagram = [
+        "```mermaid",
+        "graph TD",
+        "    A[Submitted] --> B[Triaged]",
+        "    B --> C[Waiting for Input]",
+        "    C --> B",
+        "    B --> D[Resolved - No Change]",
+        "    B --> E[Resolved - change required]",
+        "    B --> F[Deferred]",
+        "    B --> G[Duplicate]",
+        "    E --> H[Applied]",
+        "    H --> I[Published]",
+        "    ",
+        "    classDef terminal fill:#d9f7be,stroke:#52c41a;",
+        "    classDef canBeApplied fill:#91caff,stroke:#1677ff;",
+        "    ",
+        "    class D,F,G,H,I terminal;",
+        "    class E canBeApplied;",
+        "```"
+    ]
+    
+    return "\n".join(diagram)
+
 def generate_report(df, analysis_periods, staff_list):
     """Generate full markdown report"""
     md = []
@@ -287,14 +606,27 @@ def generate_report(df, analysis_periods, staff_list):
     start_date, end_date, label = parse_time_period(primary_period)
     human_readable_period = get_period_label(start_date, end_date)
     
+    # Get workflow info
+    workflow_info = get_jira_workflow_info()
+    
     # Title and analysis period
-    md.append("# Issue Resolution Summary Report\n")
+    md.append("# Issue Application Summary Report\n")
     md.append(f"> **Analysis Period:** {human_readable_period}\n")
+    
+    # NEW: Add workflow diagram
+    md.append("## Workflow Overview\n")
+    md.append("The following diagram shows the status workflow for issues in the system:\n")
+    md.append(generate_workflow_diagram())
+    md.append("\n- **Green boxes** represent terminal statuses (final states)")
+    md.append("- **Blue box** represents the status that can lead to 'Applied'")
+    md.append("- Only issues in the 'Resolved - change required' status are counted in the application backlog\n")
     
     # Add table of contents
     md.append("## Table of Contents\n")
+    md.append("- [Workflow Overview](#workflow-overview)")
     md.append("- [How to Read This Report](#how-to-read-this-report)")
     md.append("- [Overall Summary](#overall-summary)")
+    md.append("- [Status Distribution](#status-distribution)")
     md.append("- [Summary by Analysis Period](#summary-by-analysis-period)")
     
     for period in analysis_periods:
@@ -304,6 +636,19 @@ def generate_report(df, analysis_periods, staff_list):
         md.append(f"- [Breakdown by Period within {label}](#{anchor})")
     
     md.append("- [Issue Reporters](#issue-reporters)")
+    
+    # Add Issue Appliers section to TOC if data available
+    if 'Applied User' in df.columns:
+        md.append("- [Issue Appliers](#issue-appliers)")
+    
+    # Add Resolution to Application Gap section to TOC if data available
+    if 'Applied Date' in df.columns and 'Original Resolution Date' in df.columns:
+        md.append("- [Resolution to Application Gap](#resolution-to-application-gap)")
+    
+    # Add Issue Type section to TOC if the column exists
+    if 'Issue Type' in df.columns:
+        md.append("- [Breakdown by Issue Type](#breakdown-by-issue-type)")
+    
     md.append("- [Breakdown by Realm](#breakdown-by-realm)")
     md.append("- [Breakdown by WG Name and Realm](#breakdown-by-wg-name-and-realm)")
     md.append("- [Breakdown by WG Name](#breakdown-by-wg-name)")
@@ -315,11 +660,14 @@ def generate_report(df, analysis_periods, staff_list):
     md.append("## How to Read This Report\n")
     md.append("### Key Metrics\n")
     md.append("- **New:** Issues created during the specified time period")
-    md.append("- **Resolved:** Issues with a resolution date during the specified time period. Note: the resolution date in Jira is assigned early -- when an issue is given a (proposed) disposition. This is not necessarily when the change is applied to the specification.")
-    md.append("- **Backlog:** Issues created at any time before the end of the specified period that remain unresolved at the end of that period")
-    md.append("- **Ave (days):** Average time to resolution for issues resolved in this period")
-    md.append("- **Median (days):** Median time to resolution (50% of issues resolved faster than this)")
-    md.append("- **P80 (days):** 80th percentile resolution time (80% of issues resolved faster than this)\n")
+    md.append("- **Applied:** Issues that had the 'Applied' status change during the specified time period. This indicates when changes were actually applied to the specification.")
+    
+    # NEW: Updated backlog explanation
+    md.append("- **Backlog:** Issues that are in 'Resolved - change required' status or are still in progress at the end of the period. This excludes issues that have reached terminal statuses like 'Resolved - No Change', 'Deferred', and 'Duplicate'.")
+    
+    md.append("- **Ave (days):** Average time from creation to application for issues applied in this period")
+    md.append("- **Median (days):** Median time from creation to application (50% of issues applied faster than this)")
+    md.append("- **P80 (days):** 80th percentile application time (80% of issues applied faster than this)\n")
     
     md.append("### Time Periods\n")
     md.append("Periods are defined as:")
@@ -330,16 +678,16 @@ def generate_report(df, analysis_periods, staff_list):
     md.append("### Performance Bands\n")
     md.append("| Band                  | P80 Range (days) | Interpretation                                                                             |")
     md.append("|-----------------------|------------------|--------------------------------------------------------------------------------------------|")
-    md.append("| **🏎️ Presto**         | ≤ 60             | 80% of tickets close within two months. Very fast, high performance, hypercar speed.                                      |")
-    md.append("| **🚴 Allegro**              | 61 – 180         | 80% close within six months. Fast, responsive, moving quickly.                    |")
-    md.append("| **🚶 Andante**         | 181 – 365        | 80% close within a year. Moderate pace, moving steady, but with opportunities to accelerate.         |")
-    md.append("| **🐢 Adagio** | > 365            | 20% of tickets take *more* than a year. Very slow, sluggish. Let's look for bottlenecks or resource gaps.  |\n")
+    md.append("| **🏎️ Presto**         | ≤ 60             | 80% of tickets applied within two months. Very fast, high performance, hypercar speed.                                      |")
+    md.append("| **🚴 Allegro**              | 61 – 180         | 80% applied within six months. Fast, responsive, moving quickly.                    |")
+    md.append("| **🚶 Andante**         | 181 – 365        | 80% applied within a year. Moderate pace, moving steady, but with opportunities to accelerate.         |")
+    md.append("| **🐢 Adagio** | > 365            | 20% of tickets take *more* than a year to be applied. Very slow. Let's look for bottlenecks or resource gaps.  |\n")
     md.append("_Note: For fun, these performance band labels are inspired by the music vocabulary for tempo. For more information, see the [Tempo article on Wikipedia](https://en.wikipedia.org/wiki/Tempo)._")
 
     # Overall summary
     total = len(df)
     resolved = df['is_resolved'].sum()
-    backlog = total - resolved
+    backlog = df[df['backlog_at_{}_end'.format(analysis_periods[0])]].shape[0]  # Use refined backlog metric for the primary analysis period
     
     # Get earliest and latest dates in dataset
     earliest_date = df['Created Date'].min()
@@ -362,17 +710,36 @@ def generate_report(df, analysis_periods, staff_list):
     md.append("## Overall Summary\n")
     md.append(f"This summary includes all issues in the dataset from **{date_range}**.\n")
     md.append(f"- **Total Issues:** {total}")
-    md.append(f"- **Resolved Issues:** {resolved}")
-    md.append(f"- **Current Backlog (Unresolved):** {backlog}")
-    md.append(f"- **Ave Resolution Time (days):** {ave_str}")
-    md.append(f"- **Median Resolution Time (days):** {med_str}")
-    md.append(f"- **P80 Resolution Time (days):** {p80_str}")
+    md.append(f"- **Applied Issues:** {resolved}")
+    md.append(f"- **Current Application Backlog:** {backlog}")
+    md.append(f"- **Ave Time to Application (days):** {ave_str}")
+    md.append(f"- **Median Time to Application (days):** {med_str}")
+    md.append(f"- **P80 Time to Application (days):** {p80_str}")
     md.append(f"- **Performance Band:** {band}")
     md.append("")
     
+    # NEW: Status Distribution Section
+    md.append("## Status Distribution\n")
+    for period in analysis_periods:
+        _, _, label = parse_time_period(period)
+        status_data = analyze_status_distribution(df, period)
+        
+        if status_data is not None and not status_data.empty:
+            md.append(f"### Status Distribution at the end of {label}\n")
+            md.append("| Status | Count | Percentage |")
+            md.append("|--------|-------|------------|")
+            
+            for _, row in status_data.iterrows():
+                status = row['Status'] if pd.notnull(row['Status']) else "Unknown"
+                count = int(row['Count'])
+                percentage = f"{row['Percentage']}%"
+                md.append(f"| {status} | {count} | {percentage} |")
+            
+            md.append("")
+    
     # Summary by Analysis Period
     md.append("## Summary by Analysis Period\n")
-    md.append("| Period | New | Resolved | Backlog | Ave (days) | Median (days) | P80 (days) | Performance |")
+    md.append("| Period | New | Applied | Backlog | Ave (days) | Median (days) | P80 (days) | Performance |")
     md.append("|--------|-----|----------|---------|------------|---------------|------------|------------|")
     
     for period in analysis_periods:
@@ -400,7 +767,7 @@ def generate_report(df, analysis_periods, staff_list):
         md.append(f"## Breakdown by Period within {label}\n")
         md.append(f"This breakdown covers **{human_readable_range}**.\n")
         
-        md.append("| Period | New | Resolved | Backlog | Ave (days) | Median (days) | P80 (days) | Performance |")
+        md.append("| Period | New | Applied | Backlog | Ave (days) | Median (days) | P80 (days) | Performance |")
         md.append("|--------|-----|----------|---------|------------|---------------|------------|------------|")
         
         # Get metrics for each period
@@ -475,15 +842,89 @@ def generate_report(df, analysis_periods, staff_list):
     
     md.append("")
     
+    # Issue Appliers Analysis (if data available)
+    if 'Applied User' in df.columns:
+        md.append("## Issue Appliers\n")
+        
+        # For each analysis period
+        for period in analysis_periods:
+            _, _, label = parse_time_period(period)
+            applier_data = analyze_appliers(df, period)
+            
+            if applier_data is not None and not applier_data.empty:
+                md.append(f"### Top Appliers for {label}\n")
+                md.append("| Rank | Applier | Issues Applied |")
+                md.append("|------|---------|----------------|")
+                
+                # Show top 10 appliers
+                for i, (_, row) in enumerate(applier_data.head(10).iterrows(), 1):
+                    applier = row['Applier'] if pd.notnull(row['Applier']) else "Unknown"
+                    count = int(row['Issue Count'])
+                    md.append(f"| {i} | {applier} | {count} |")
+                
+                md.append("")
+    
+    # Resolution to Application Gap Analysis (if data available)
+    if 'Applied Date' in df.columns and 'Original Resolution Date' in df.columns:
+        md.append("## Resolution to Application Gap\n")
+        md.append("This section analyzes the time between when an issue is marked as 'Resolved - change required' and when it is actually applied to the specification.\n")
+        
+        # For each analysis period
+        for period in analysis_periods:
+            _, _, label = parse_time_period(period)
+            gap_stats = analyze_resolution_to_application_gap(df, period)
+            
+            if gap_stats is not None:
+                md.append(f"### Gap Analysis for {label}\n")
+                md.append(f"- **Total Issues Analyzed:** {gap_stats['count']}")
+                md.append(f"- **Average Gap (days):** {gap_stats['mean']:.2f}")
+                md.append(f"- **Median Gap (days):** {gap_stats['median']:.2f}")
+                md.append(f"- **P80 Gap (days):** {gap_stats['p80']:.2f}")
+                md.append(f"- **Min Gap (days):** {gap_stats['min']:.2f}")
+                md.append(f"- **Max Gap (days):** {gap_stats['max']:.2f}")
+                md.append("")
+                
+                # Determine performance band for gap
+                gap_band = get_performance_band(gap_stats['p80'])
+                md.append(f"- **Performance Band for Application Gap:** {gap_band}")
+                md.append("")
+    
+    # Add Issue Type Analysis if column exists
+    if 'Issue Type' in df.columns:
+        md.append("## Breakdown by Issue Type\n")
+        
+        # For each analysis period
+        for period in analysis_periods:
+            _, _, period_label = parse_time_period(period)
+            issue_type_data = analyze_issue_types(df, period)
+            
+            if issue_type_data is not None and not issue_type_data.empty:
+                md.append(f"### Issue Types for {period_label}\n")
+                md.append("| Issue Type | New | Applied | Backlog | Avg Days | Median Days | P80 Days | Performance |")
+                md.append("|------------|-----|----------|---------|----------|-------------|----------|------------|")
+                
+                for _, row in issue_type_data.iterrows():
+                    issue_type = row['Issue Type'] if pd.notnull(row['Issue Type']) else "Unknown"
+                    new_count = int(row['New Count'])
+                    resolved_count = int(row['Resolved Count']) if pd.notnull(row['Resolved Count']) else 0
+                    backlog_count = int(row['Backlog Count']) if pd.notnull(row['Backlog Count']) else 0
+                    
+                    avg_days = f"{row['Avg Days']:.2f}" if pd.notnull(row['Avg Days']) else "N/A"
+                    median_days = f"{row['Median Days']:.2f}" if pd.notnull(row['Median Days']) else "N/A"
+                    p80_days = f"{row['P80 Days']:.2f}" if pd.notnull(row['P80 Days']) else "N/A"
+                    performance = row['Performance'] if pd.notnull(row['Performance']) else "N/A"
+                    
+                    md.append(f"| {issue_type} | {new_count} | {resolved_count} | {backlog_count} | {avg_days} | {median_days} | {p80_days} | {performance} |")
+                
+                md.append("")
+    
     # Helper function for category breakdowns
-    # 1. First, find the render_breakdown function in the script and replace it with this version:
-
     def render_breakdown(title, column):
         md.append(f"## {title}\n")
         
         # Special case for Specification Display Name - include Realm column
         if column == "Specification Display Name":
-            md.append(f"| {column} | Realm | Period | New | Resolved | Backlog | Ave (days) | Median (days) | P80 (days) | Performance |")
+            md.append(f"| {column} | Realm | Period | New | Applied | Backlog | Ave (days) | Median (days) | P80 (days) | Performance |")
             md.append("|" + "-" * len(column) + "|-------|--------|-----|----------|---------|------------|---------------|------------|------------|")
             
             # Get categories
@@ -512,7 +953,7 @@ def generate_report(df, analysis_periods, staff_list):
                         # Count resolved issues
                         resolved_count = spec_realm_df[f'resolved_in_{label}'].sum()
                         
-                        # Count backlog
+                        # Count backlog using refined definition
                         backlog_count = spec_realm_df[f'backlog_at_{label}_end'].sum()
                         
                         # Skip rows with no activity for this period (0 new, 0 resolved, 0 backlog)
@@ -538,7 +979,7 @@ def generate_report(df, analysis_periods, staff_list):
                         md.append(f"| {category} | {realm_display} | {label} | {new_count} | {resolved_count} | {backlog_count} | {ave_str} | {med_str} | {p80_str} | {band} |")
         else:
             # Original implementation for other columns
-            md.append(f"| {column} | Period | New | Resolved | Backlog | Ave (days) | Median (days) | P80 (days) | Performance |")
+            md.append(f"| {column} | Period | New | Applied | Backlog | Ave (days) | Median (days) | P80 (days) | Performance |")
             md.append("|" + "-" * len(column) + "|--------|-----|----------|---------|------------|---------------|------------|------------|")
             
             # Get categories
@@ -556,7 +997,7 @@ def generate_report(df, analysis_periods, staff_list):
                     # Count resolved issues
                     resolved_count = category_df[f'resolved_in_{label}'].sum()
                     
-                    # Count backlog
+                    # Count backlog using refined definition
                     backlog_count = category_df[f'backlog_at_{label}_end'].sum()
                     
                     # Skip rows with no activity for this period (0 new, 0 resolved, 0 backlog)
@@ -615,14 +1056,14 @@ def generate_report(df, analysis_periods, staff_list):
 
 def main():
     parser = argparse.ArgumentParser(
-        description="Analyze issue resolutions and generate a markdown summary report with TOC, median, and P80."
+        description="Analyze issue application data and generate a markdown summary report focusing on when issues were marked as Applied."
     )
     parser.add_argument("-i", "--input", required=True, help="Input CSV file path")
     parser.add_argument("-o", "--output", required=True, help="Output Markdown file path")
     parser.add_argument("-p", "--periods", required=True, nargs="+", 
-                       help="Analysis periods in format 'YYYY' (full year) or 'YYYYT[1-3]' (period)")
+                    help="Analysis periods in format 'YYYY' (full year) or 'YYYYT[1-3]' (period)")
     parser.add_argument("-s", "--staff-config", default="data/working/config/hl7-staff.yaml",
-                       help="Path to HL7 staff configuration file")
+                    help="Path to HL7 staff configuration file")
     
     args = parser.parse_args()
     
@@ -647,9 +1088,18 @@ def main():
     if 'Specification Display Name' not in df.columns and 'Specification' in df.columns:
         df.rename(columns={'Specification':'Specification Display Name'}, inplace=True)
     
+    # Verify that we have Applied Date
+    if 'Applied Date' not in df.columns:
+        print("WARNING: 'Applied Date' column not found in input file. This script is designed to analyze applied dates.")
+        print("Please ensure you've used parse-jira-filter-export-csv-md.py with the --history option to extract applied dates.")
+    
     # Process data
     print(f"Processing data for periods: {', '.join(args.periods)}")
     df = process_data(df, args.periods)
+    
+    if df is None:
+        print("ERROR: Could not process data due to missing required columns. Exiting.")
+        return
     
     # Generate report
     print("Generating report")

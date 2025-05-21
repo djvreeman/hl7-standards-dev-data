@@ -1,4 +1,75 @@
 #!/usr/bin/env python3
+# =============================================================================
+# HL7 Jira Issue Resolution Summary Report Generator
+#
+# Description:
+# This script analyzes HL7 JIRA issue data from a CSV export and generates a
+# detailed Markdown report. The report includes summary statistics for new,
+# resolved, and unresolved (backlog) issues, resolution times (average, median,
+# 80th percentile), performance bands, issue reporter insights, and breakdowns
+# by realm, working group, specification, and product family.
+#
+# Features:
+# - Time period-based metrics for any combination of years or trimesters (e.g., 2025, 2025T1)
+# - Derived fields including days to resolution and performance band
+# - Reporter analysis, including new contributors and top issue submitters
+# - Breakdown by issue type (if available in the data)
+# - Markdown report with automatic Table of Contents and section anchors
+# - YAML-configurable HL7 staff filter for excluding internal submitters from rankings
+#
+# Accepted Time Period Formats:
+#   - Full year: '2024'
+#   - Trimester: '2025T1', '2025T2', '2025T3'
+#   - Ranges: '2023-2025T2', '2024T2-2025T1'
+#
+# Performance Bands:
+#   - 🏎️ Presto: ≤ 60 days
+#   - 🚴 Allegro: 61–180 days
+#   - 🚶 Andante: 181–365 days
+#   - 🐢 Adagio: > 365 days
+#
+# Requirements:
+#   - Python 3.7+
+#   - pandas, numpy, pyyaml
+#
+# Inputs:
+#   - CSV file with issue data (must include columns: "Created Date", "Resolution Date", "Reporter")
+#   - Optional YAML file listing HL7 staff to exclude from reporter rankings
+#
+# Example YAML structure (`hl7-staff.yaml`):
+#   - display_name: Jane Smith
+#   - display_name: John Doe
+#
+# === Example Usage ===
+#
+# 1. Analyze a full year and generate a report:
+#    python analyze-issue-resolution.py \
+#       -i "jira-issues.csv" \
+#       -o "summary-report.md" \
+#       -p 2024
+#
+# 2. Analyze multiple periods (e.g., a full year plus a specific trimester):
+#    python analyze-issue-resolution.py \
+#       -i "jira-issues.csv" \
+#       -o "summary-report.md" \
+#       -p 2024 2025T1
+#
+# 3. Use a custom YAML staff list for filtering reporters:
+#    python analyze-issue-resolution.py \
+#       -i "jira-issues.csv" \
+#       -o "summary-report.md" \
+#       -p 2025T1 \
+#       -s "data/working/config/custom-staff.yaml"
+#
+# Output:
+#   - A Markdown file summarizing issue metrics and reporter analysis
+#   - Includes detailed breakdown tables and performance insights
+#
+# Author:
+#   Daniel J. Vreeman, PT, DPT, MS, FACMI, FIAHSI
+#   HL7 International
+# =============================================================================
+
 import argparse
 import pandas as pd
 import numpy as np
@@ -21,7 +92,22 @@ def load_staff_config(config_path):
         return []
 
 def parse_time_period(period_str):
-    """Parse a time period string like '2025T1' or '2024' into start and end dates"""
+    """Parse a time period string like '2025T1', '2024', or '2024-2025T1' into start and end dates"""
+    # Range format: '2024-2025T1'
+    range_match = re.match(r'^(\d{4}(?:T[1-3])?)-(\d{4}(?:T[1-3])?)$', period_str)
+    if range_match:
+        # Get start and end periods
+        start_period = range_match.group(1)
+        end_period = range_match.group(2)
+        
+        # Parse start and end dates
+        start_date, _, _ = parse_time_period(start_period)
+        _, end_date, _ = parse_time_period(end_period)
+        
+        # Create label
+        label = f"{start_period}-{end_period}"
+        return start_date, end_date, label
+    
     # Full year format: '2024'
     full_year_match = re.match(r'^(\d{4})$', period_str)
     if full_year_match:
@@ -51,7 +137,7 @@ def parse_time_period(period_str):
         return start_date, end_date, label
     
     # If we got here, the format is invalid
-    raise ValueError(f"Invalid time period format: {period_str}. Use 'YYYY' or 'YYYYT[1-3]'")
+    raise ValueError(f"Invalid time period format: {period_str}. Use 'YYYY', 'YYYYT[1-3]', or 'YYYY[-T[1-3]]-YYYY[-T[1-3]]'")
 
 def get_period_label(start_date, end_date):
     """Get a human-readable label for a date range"""
@@ -200,13 +286,13 @@ def get_performance_band(p80_value):
     if p80_value is None:
         return "N/A"
     if p80_value <= 60:
-        return "Excellent"
+        return "🏎️ Presto"
     elif p80_value <= 180:
-        return "Good"
+        return "🚴 Allegro"
     elif p80_value <= 365:
-        return "Moderate"
+        return "🚶 Andante"
     else:
-        return "Needs Improvement"
+        return "🐢 Adagio"
 
 def analyze_submitters(df, period_str, staff_list):
     """Analyze issue reporters for a specific period"""
@@ -263,6 +349,69 @@ def analyze_submitters(df, period_str, staff_list):
         'top_all_time_reporters': top_all_time_reporters
     }
 
+def analyze_issue_types(df, period_str):
+    """Analyze issue types for a specific period"""
+    start_date, end_date, label = parse_time_period(period_str)
+    
+    # Skip if the Issue Type column doesn't exist
+    if 'Issue Type' not in df.columns:
+        return None
+
+    # Get issues created in this period
+    period_mask = (df['Created Date'] >= start_date) & (df['Created Date'] <= end_date)
+    period_df = df[period_mask]
+    
+    # Get issues resolved in this period
+    resolved_mask = df['is_resolved'] & (df['Resolution Date'] >= start_date) & (df['Resolution Date'] <= end_date)
+    resolved_df = df[resolved_mask]
+    
+    # Count issues by type
+    issue_type_counts = period_df['Issue Type'].value_counts().reset_index()
+    issue_type_counts.columns = ['Issue Type', 'New Count']
+    
+    # Count resolved issues by type
+    resolved_counts = resolved_df['Issue Type'].value_counts().reset_index()
+    resolved_counts.columns = ['Issue Type', 'Resolved Count']
+    
+    # Calculate average resolution time by type
+    resolution_times = resolved_df.groupby('Issue Type')['days_to_resolution'].agg(['mean', 'median', 'count']).reset_index()
+    resolution_times.columns = ['Issue Type', 'Avg Days', 'Median Days', 'Resolved Count']
+    
+    # Merge the data
+    merged = pd.merge(issue_type_counts, resolution_times, on='Issue Type', how='outer')
+    
+    # Calculate backlog at end of period
+    backlog_mask = (df['Created Date'] <= end_date) & ((~df['is_resolved']) | (df['Resolution Date'] > end_date))
+    backlog_df = df[backlog_mask]
+    backlog_counts = backlog_df['Issue Type'].value_counts().reset_index()
+    backlog_counts.columns = ['Issue Type', 'Backlog Count']
+    
+    # Merge backlog data
+    merged = pd.merge(merged, backlog_counts, on='Issue Type', how='outer')
+    
+    # Fill NaN values with 0 for counts and N/A for time metrics
+    merged['New Count'] = merged['New Count'].fillna(0).astype(int)
+    merged['Resolved Count'] = merged['Resolved Count'].fillna(0).astype(int)
+    merged['Backlog Count'] = merged['Backlog Count'].fillna(0).astype(int)
+    
+    # Sort by New Count (descending)
+    merged = merged.sort_values(by='New Count', ascending=False)
+    
+    # Calculate P80 for each issue type
+    def calculate_p80(issue_type):
+        times = resolved_df.loc[resolved_df['Issue Type'] == issue_type, 'days_to_resolution']
+        if not times.empty and len(times) >= 5:  # Only calculate P80 if we have at least 5 data points
+            return times.quantile(0.8)
+        return None
+    
+    # Add P80 column
+    merged['P80 Days'] = merged['Issue Type'].apply(calculate_p80)
+    
+    # Add performance band
+    merged['Performance'] = merged['P80 Days'].apply(get_performance_band)
+    
+    return merged
+
 def generate_report(df, analysis_periods, staff_list):
     """Generate full markdown report"""
     md = []
@@ -289,6 +438,11 @@ def generate_report(df, analysis_periods, staff_list):
         md.append(f"- [Breakdown by Period within {label}](#{anchor})")
     
     md.append("- [Issue Reporters](#issue-reporters)")
+    
+    # Add Issue Type section to TOC if the column exists
+    if 'Issue Type' in df.columns:
+        md.append("- [Breakdown by Issue Type](#breakdown-by-issue-type)")
+    
     md.append("- [Breakdown by Realm](#breakdown-by-realm)")
     md.append("- [Breakdown by WG Name and Realm](#breakdown-by-wg-name-and-realm)")
     md.append("- [Breakdown by WG Name](#breakdown-by-wg-name)")
@@ -315,11 +469,12 @@ def generate_report(df, analysis_periods, staff_list):
     md.append("### Performance Bands\n")
     md.append("| Band                  | P80 Range (days) | Interpretation                                                                             |")
     md.append("|-----------------------|------------------|--------------------------------------------------------------------------------------------|")
-    md.append("| **Excellent**         | ≤ 60             | 80% of tickets close within two months—very tight SLA.                                      |")
-    md.append("| **Good**              | 61 – 180         | 80% close within six months—reasonable for complex standard‑development.                    |")
-    md.append("| **Moderate**          | 181 – 365        | 80% close within a year—acceptable but opportunities exist to accelerate processes.         |")
-    md.append("| **Needs Improvement** | > 365            | 20% of tickets take longer than a year—indicative of serious bottlenecks or resource gaps.  |\n")
-    
+    md.append("| **🏎️ Presto**         | ≤ 60             | 80% of tickets close within two months. Very fast, high performance, hypercar speed.                                      |")
+    md.append("| **🚴 Allegro**              | 61 – 180         | 80% close within six months. Fast, responsive, moving quickly.                    |")
+    md.append("| **🚶 Andante**         | 181 – 365        | 80% close within a year. Moderate pace, moving steady, but with opportunities to accelerate.         |")
+    md.append("| **🐢 Adagio** | > 365            | 20% of tickets take *more* than a year. Very slow. Let's look for bottlenecks or resource gaps.  |\n")
+    md.append("_Note: For fun, these performance band labels are inspired by the music vocabulary for tempo. For more information, see the [Tempo article on Wikipedia](https://en.wikipedia.org/wiki/Tempo)._")
+
     # Overall summary
     total = len(df)
     resolved = df['is_resolved'].sum()
@@ -378,9 +533,12 @@ def generate_report(df, analysis_periods, staff_list):
     
     # Breakdown by period within each period
     for period in analysis_periods:
-        _, _, label = parse_time_period(period)
+        start_date, end_date, label = parse_time_period(period)
+        human_readable_range = get_period_label(start_date, end_date)
         
         md.append(f"## Breakdown by Period within {label}\n")
+        md.append(f"This breakdown covers **{human_readable_range}**.\n")
+        
         md.append("| Period | New | Resolved | Backlog | Ave (days) | Median (days) | P80 (days) | Performance |")
         md.append("|--------|-----|----------|---------|------------|---------------|------------|------------|")
         
@@ -456,46 +614,139 @@ def generate_report(df, analysis_periods, staff_list):
     
     md.append("")
     
+    # Add Issue Type Analysis if column exists
+    if 'Issue Type' in df.columns:
+        md.append("## Breakdown by Issue Type\n")
+        
+        # For each analysis period
+        for period in analysis_periods:
+            _, _, period_label = parse_time_period(period)
+            issue_type_data = analyze_issue_types(df, period)
+            
+            if issue_type_data is not None and not issue_type_data.empty:
+                md.append(f"### Issue Types for {period_label}\n")
+                md.append("| Issue Type | New | Resolved | Backlog | Avg Days | Median Days | P80 Days | Performance |")
+                md.append("|------------|-----|----------|---------|----------|-------------|----------|------------|")
+                
+                for _, row in issue_type_data.iterrows():
+                    issue_type = row['Issue Type'] if pd.notnull(row['Issue Type']) else "Unknown"
+                    new_count = int(row['New Count'])
+                    resolved_count = int(row['Resolved Count']) if pd.notnull(row['Resolved Count']) else 0
+                    backlog_count = int(row['Backlog Count']) if pd.notnull(row['Backlog Count']) else 0
+                    
+                    avg_days = f"{row['Avg Days']:.2f}" if pd.notnull(row['Avg Days']) else "N/A"
+                    median_days = f"{row['Median Days']:.2f}" if pd.notnull(row['Median Days']) else "N/A"
+                    p80_days = f"{row['P80 Days']:.2f}" if pd.notnull(row['P80 Days']) else "N/A"
+                    performance = row['Performance'] if pd.notnull(row['Performance']) else "N/A"
+                    
+                    md.append(f"| {issue_type} | {new_count} | {resolved_count} | {backlog_count} | {avg_days} | {median_days} | {p80_days} | {performance} |")
+                
+                md.append("")
+        
+        # Removed "Issue Types by Realm" and "Issue Types by Workgroup" sections as requested
+    
     # Helper function for category breakdowns
     def render_breakdown(title, column):
         md.append(f"## {title}\n")
-        md.append(f"| {column} | Period | New | Resolved | Backlog | Ave (days) | Median (days) | P80 (days) | Performance |")
-        md.append("|" + "-" * len(column) + "|--------|-----|----------|---------|------------|---------------|------------|------------|")
         
-        # Get categories
-        categories = sorted(df[column].dropna().unique())
-        
-        for category in categories:
-            category_df = df[df[column] == category]
+        # Special case for Specification Display Name - include Realm column
+        if column == "Specification Display Name":
+            md.append(f"| {column} | Realm | Period | New | Resolved | Backlog | Ave (days) | Median (days) | P80 (days) | Performance |")
+            md.append("|" + "-" * len(column) + "|-------|--------|-----|----------|---------|------------|---------------|------------|------------|")
             
-            for period in analysis_periods:
-                _, _, label = parse_time_period(period)
+            # Get categories
+            categories = sorted(df[column].dropna().unique())
+            
+            for category in categories:
+                category_df = df[df[column] == category]
                 
-                # Count new issues
-                new_count = category_df[f'created_in_{label}'].sum()
+                # Get the realms for this specification
+                realms = category_df['Realm'].dropna().unique()
                 
-                # Count resolved issues
-                resolved_count = category_df[f'resolved_in_{label}'].sum()
+                # If no realms found, use "Unknown"
+                if len(realms) == 0:
+                    realms = ["Unknown"]
                 
-                # Count backlog
-                backlog_count = category_df[f'backlog_at_{label}_end'].sum()
+                for realm in realms:
+                    # Filter by both specification and realm
+                    spec_realm_df = category_df[category_df['Realm'] == realm] if pd.notnull(realm) else category_df[category_df['Realm'].isna()]
+                    
+                    for period in analysis_periods:
+                        _, _, label = parse_time_period(period)
+                        
+                        # Count new issues
+                        new_count = spec_realm_df[f'created_in_{label}'].sum()
+                        
+                        # Count resolved issues
+                        resolved_count = spec_realm_df[f'resolved_in_{label}'].sum()
+                        
+                        # Count backlog
+                        backlog_count = spec_realm_df[f'backlog_at_{label}_end'].sum()
+                        
+                        # Skip rows with no activity for this period (0 new, 0 resolved, 0 backlog)
+                        if new_count == 0 and resolved_count == 0 and backlog_count == 0:
+                            continue
+                        
+                        # Calculate resolution times
+                        times = spec_realm_df.loc[spec_realm_df[f'resolved_in_{label}'], 'days_to_resolution']
+                        
+                        if not times.empty and len(times) > 0:
+                            ave = times.mean()
+                            med = times.median()
+                            p80 = times.quantile(0.8)
+                            ave_str = f"{ave:.2f}"
+                            med_str = f"{med:.2f}"
+                            p80_str = f"{p80:.2f}"
+                            band = get_performance_band(p80)
+                        else:
+                            ave_str = med_str = p80_str = "N/A"
+                            band = "N/A"
+                        
+                        realm_display = realm if pd.notnull(realm) else "Unknown"
+                        md.append(f"| {category} | {realm_display} | {label} | {new_count} | {resolved_count} | {backlog_count} | {ave_str} | {med_str} | {p80_str} | {band} |")
+        else:
+            # Original implementation for other columns
+            md.append(f"| {column} | Period | New | Resolved | Backlog | Ave (days) | Median (days) | P80 (days) | Performance |")
+            md.append("|" + "-" * len(column) + "|--------|-----|----------|---------|------------|---------------|------------|------------|")
+            
+            # Get categories
+            categories = sorted(df[column].dropna().unique())
+            
+            for category in categories:
+                category_df = df[df[column] == category]
                 
-                # Calculate resolution times
-                times = category_df.loc[category_df[f'resolved_in_{label}'], 'days_to_resolution']
-                
-                if not times.empty and len(times) > 0:
-                    ave = times.mean()
-                    med = times.median()
-                    p80 = times.quantile(0.8)
-                    ave_str = f"{ave:.2f}"
-                    med_str = f"{med:.2f}"
-                    p80_str = f"{p80:.2f}"
-                    band = get_performance_band(p80)
-                else:
-                    ave_str = med_str = p80_str = "N/A"
-                    band = "N/A"
-                
-                md.append(f"| {category} | {label} | {new_count} | {resolved_count} | {backlog_count} | {ave_str} | {med_str} | {p80_str} | {band} |")
+                for period in analysis_periods:
+                    _, _, label = parse_time_period(period)
+                    
+                    # Count new issues
+                    new_count = category_df[f'created_in_{label}'].sum()
+                    
+                    # Count resolved issues
+                    resolved_count = category_df[f'resolved_in_{label}'].sum()
+                    
+                    # Count backlog
+                    backlog_count = category_df[f'backlog_at_{label}_end'].sum()
+                    
+                    # Skip rows with no activity for this period (0 new, 0 resolved, 0 backlog)
+                    if column == "Specification Display Name" and new_count == 0 and resolved_count == 0 and backlog_count == 0:
+                        continue
+                    
+                    # Calculate resolution times
+                    times = category_df.loc[category_df[f'resolved_in_{label}'], 'days_to_resolution']
+                    
+                    if not times.empty and len(times) > 0:
+                        ave = times.mean()
+                        med = times.median()
+                        p80 = times.quantile(0.8)
+                        ave_str = f"{ave:.2f}"
+                        med_str = f"{med:.2f}"
+                        p80_str = f"{p80:.2f}"
+                        band = get_performance_band(p80)
+                    else:
+                        ave_str = med_str = p80_str = "N/A"
+                        band = "N/A"
+                    
+                    md.append(f"| {category} | {label} | {new_count} | {resolved_count} | {backlog_count} | {ave_str} | {med_str} | {p80_str} | {band} |")
         
         md.append("")
     

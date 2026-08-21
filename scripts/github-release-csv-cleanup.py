@@ -11,7 +11,7 @@
 # - Column 3 and 4: Additional fields (optional)
 #
 # If the output file is not specified, the script will automatically generate an output file
-# by appending '-parsed' to the input filename before the extension.
+# in the same directory as the input file, with '-cleaned' added before the extension.
 #
 # Usage:
 # python3 github-release-csv-cleanup.py -i input-file.csv [-o output-file.csv]
@@ -22,6 +22,7 @@ import pprint
 import json
 import argparse
 import getopt
+import os
 from datetime import datetime
 from collections import defaultdict
 
@@ -35,12 +36,15 @@ args = parser.parse_args()
 # Setup file names
 csvInputFileName = args.i
 
-# If no output file is specified, append '-parsed' before the file extension of the input file
+# If no output file is specified, create output in same directory as input with '-cleaned' added before the extension
 if args.o:
     csvOutputFileName = args.o
 else:
-    input_name_parts = csvInputFileName.rsplit('.', 1)
-    csvOutputFileName = f"{input_name_parts[0]}-parsed.{input_name_parts[1]}"
+    input_dir = os.path.dirname(csvInputFileName)
+    input_basename = os.path.basename(csvInputFileName)
+    input_name_parts = input_basename.rsplit('.', 1)
+    output_basename = f"{input_name_parts[0]}-cleaned.{input_name_parts[1]}"
+    csvOutputFileName = os.path.join(input_dir, output_basename) if input_dir else output_basename
 
 with open(csvOutputFileName, mode='w') as csv_file:
     csvWriter = csv.writer(csv_file, quoting=csv.QUOTE_ALL)

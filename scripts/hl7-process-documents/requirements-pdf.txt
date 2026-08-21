@@ -1,0 +1,15 @@
+# Requirements for PDF conversion script
+# Install with: pip install -r requirements-pdf.txt
+
+# Core dependencies
+requests>=2.25.0
+beautifulsoup4>=4.9.0
+pyyaml>=5.4.0
+
+# PDF conversion libraries (install at least one)
+weasyprint>=54.0  # Preferred - better HTML/CSS support
+# pdfkit>=1.0.0   # Alternative - requires wkhtmltopdf
+
+# Additional dependencies for weasyprint
+# On macOS: brew install cairo pango gdk-pixbuf libffi
+# On Ubuntu: sudo apt-get install libcairo2 libpango-1.0-0 libgdk-pixbuf2.0-0 libffi-dev

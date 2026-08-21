@@ -3,10 +3,16 @@ from bs4 import BeautifulSoup
 import argparse
 import csv
 import os
+from datetime import datetime
+
+# Generate default output filename with today's date
+default_output_dir = "data/working/affiliates"
+today_date = datetime.now().strftime("%Y%m%d")
+default_output = os.path.join(default_output_dir, f"{today_date}-affiliates.csv")
 
 # Parse command line arguments
 parser = argparse.ArgumentParser(description='Extract HL7 Affiliate names from the webpage and save to a CSV file.')
-parser.add_argument('-o', '--output', type=str, required=True, help='Output CSV file path')
+parser.add_argument('-o', '--output', type=str, default=default_output, help=f'Output CSV file path (default: {default_output})')
 args = parser.parse_args()
 
 # Ensure the directory exists

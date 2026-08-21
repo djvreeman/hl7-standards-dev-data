@@ -1,0 +1,996 @@
+Date: Thu, 8 Jan 2026 20:01:40 +0000 (UTC)
+Message-ID: <1835718623.35172.1767902500718@DESKTOP-KBUT5S1.awsactivedirectory.hl7.org>
+Subject: Exported From Confluence
+MIME-Version: 1.0
+Content-Type: multipart/related; 
+	boundary="----=_Part_35171_974769143.1767902500718"
+
+------=_Part_35171_974769143.1767902500718
+Content-Type: text/html; charset=UTF-8
+Content-Transfer-Encoding: quoted-printable
+Content-Location: file:///C:/exported.html
+
+<html xmlns:o=3D'urn:schemas-microsoft-com:office:office'
+      xmlns:w=3D'urn:schemas-microsoft-com:office:word'
+      xmlns:v=3D'urn:schemas-microsoft-com:vml'
+      xmlns=3D'urn:w3-org-ns:HTML'>
+<head>
+    <meta http-equiv=3D"Content-Type" content=3D"text/html; charset=3Dutf-8=
+">
+    <title>Managing Specification Feedback</title>
+    <!--[if gte mso 9]>
+    <xml>
+        <o:OfficeDocumentSettings>
+            <o:TargetScreenSize>1024x640</o:TargetScreenSize>
+            <o:PixelsPerInch>72</o:PixelsPerInch>
+            <o:AllowPNG/>
+        </o:OfficeDocumentSettings>
+        <w:WordDocument>
+            <w:View>Print</w:View>
+            <w:Zoom>90</w:Zoom>
+            <w:DoNotOptimizeForBrowser/>
+        </w:WordDocument>
+    </xml>
+    <![endif]-->
+    <style>
+                <!--
+        @page Section1 {
+            size: 8.5in 11.0in;
+            margin: 1.0in;
+            mso-header-margin: .5in;
+            mso-footer-margin: .5in;
+            mso-paper-source: 0;
+        }
+
+        table {
+            border: solid 1px;
+            border-collapse: collapse;
+        }
+
+        table td, table th {
+            border: solid 1px;
+            padding: 5px;
+        }
+
+        td {
+            page-break-inside: avoid;
+        }
+
+        tr {
+            page-break-after: avoid;
+        }
+
+        div.Section1 {
+            page: Section1;
+        }
+
+        /* Confluence print stylesheet. Common to all themes for print medi=
+a */
+/* Full of !important until we improve batching for print CSS */
+
+@media print {
+    #main {
+        padding-bottom: 1em !important; /* The default padding of 6em is to=
+o much for printouts */
+    }
+
+    body {
+        font-family: Arial, Helvetica, FreeSans, sans-serif;
+        font-size: 10pt;
+        line-height: 1.2;
+    }
+
+    body, #full-height-container, #main, #page, #content, .has-personal-sid=
+ebar #content {
+        background: var(--ds-surface, #fff) !important;
+        color: var(--ds-text, #000) !important;
+        border: 0 !important;
+        width: 100% !important;
+        height: auto !important;
+        min-height: auto !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        display: block !important;
+    }
+
+    a, a:link, a:visited, a:focus, a:hover, a:active {
+        color: var(--ds-link-pressed, #000);
+    }
+
+    #content h1,
+    #content h2,
+    #content h3,
+    #content h4,
+    #content h5,
+    #content h6 {
+        font-family: Arial, Helvetica, FreeSans, sans-serif;
+        page-break-after: avoid;
+    }
+
+    pre {
+        font-family: Monaco, "Courier New", monospace;
+    }
+
+    #header,
+    .aui-header-inner,
+    #navigation,
+    #sidebar,
+    .sidebar,
+    #personal-info-sidebar,
+    .ia-fixed-sidebar,
+    .page-actions,
+    .navmenu,
+    .ajs-menu-bar,
+    .noprint,
+    .inline-control-link,
+    .inline-control-link a,
+    a.show-labels-editor,
+    .global-comment-actions,
+    .comment-actions,
+    .quick-comment-container,
+    #addcomment {
+        display: none !important;
+    }
+
+    /* CONF-28544 cannot print multiple pages in IE */
+    #splitter-content {
+        position: relative !important;
+    }
+
+    .comment .date::before {
+        content: none !important; /* remove middot for print view */
+    }
+
+    h1.pagetitle img {
+        height: auto;
+        width: auto;
+    }
+
+    .print-only {
+        display: block;
+    }
+
+    #footer {
+        position: relative !important; /* CONF-17506 Place the footer at en=
+d of the content */
+        margin: 0;
+        padding: 0;
+        background: none;
+        clear: both;
+    }
+
+    #poweredby {
+        border-top: none;
+        background: none;
+    }
+
+    #poweredby li.print-only {
+        display: list-item;
+        font-style: italic;
+    }
+
+    #poweredby li.noprint {
+        display: none;
+    }
+
+    /* no width controls in print */
+    .wiki-content .table-wrap,
+    .wiki-content p,
+    .panel .codeContent,
+    .panel .codeContent pre,
+    .image-wrap {
+        overflow: visible !important;
+    }
+
+    /* TODO - should this work? */
+    #children-section,
+    #comments-section .comment,
+    #comments-section .comment .comment-body,
+    #comments-section .comment .comment-content,
+    #comments-section .comment p {
+        page-break-inside: avoid;
+    }
+
+    #page-children a {
+        text-decoration: none;
+    }
+
+    /**
+     hide twixies
+
+     the specificity here is a hack because print styles
+     are getting loaded before the base styles. */
+    #comments-section.pageSection .section-header,
+    #comments-section.pageSection .section-title,
+    #children-section.pageSection .section-header,
+    #children-section.pageSection .section-title,
+    .children-show-hide {
+        padding-left: 0;
+        margin-left: 0;
+    }
+
+    .children-show-hide.icon {
+        display: none;
+    }
+
+    /* personal sidebar */
+    .has-personal-sidebar #content {
+        margin-right: 0px;
+    }
+
+    .has-personal-sidebar #content .pageSection {
+        margin-right: 0px;
+    }
+
+    .no-print, .no-print * {
+        display: none !important;
+    }
+}
+-->
+    </style>
+</head>
+<body>
+    <h1>Managing Specification Feedback</h1>
+    <div class=3D"Section1">
+        <p>This page supplements the base&nbsp;<a href=3D"/spaces/HL7/pages=
+/19136736/Specification+Feedback">Specification Feedback</a> page by provid=
+ing guidance to HL7 participants who have the authority to manage feedback =
+issues.&nbsp; That includes all users who have been added to the "hl7-trust=
+ed-users" group, which includes co-chairs, facilitators and other individua=
+ls who are helping to develop and maintain HL7 standards and who have been =
+authorized by their work group to have management privileges. Such privileg=
+es can be requested by Work Group cochairs by emailing <a href=3D"mailto:we=
+bmaster@hl7.org" class=3D"external-link" rel=3D"nofollow">webmaster@hl7.org=
+</a> with the user's name and userid.</p>
+<p>Before reading this page, please read through the&nbsp;<a href=3D"/space=
+s/HL7/pages/19136736/Specification+Feedback">Specification Feedback</a> pag=
+e as this page presumes familiarity with the basic state machine and behavi=
+or of specification feedback issues.&nbsp; The focus here will be on the ad=
+ditional capabilities available to managers.</p>
+<h2 id=3D"ManagingSpecificationFeedback-Linkingissues">Linking issues</h2>
+<p>It should&nbsp;<strong>not</strong> be possible to manually create, remo=
+ve, or edit issue links on specification or ballot issues.&nbsp; (If you fi=
+nd you're able to do this, please post on the <a href=3D"https://chat.fhir.=
+org/#narrow/channel/184932-JIRA.2FConfluence" class=3D"external-link" rel=
+=3D"nofollow">Jira/Confluence</a> stream ASAP so we can investigate and fix=
+ the issue.)&nbsp; Creating, deleting, or modifying links manually can crea=
+te serious issues.</p>
+<p>There are three types of links that are allowed for specification issues=
+, and all are managed through transitions:</p>
+<ul>
+ <li data-uuid=3D"4ae7e2b4-d56a-4af5-a9fb-f9c66b9662f0">Voting links are cr=
+eated through the balloting process.&nbsp; They can only be modified by vot=
+ing or unvoting on an item</li>
+ <li data-uuid=3D"2df90206-aad6-4e18-8fbf-1403e3f21a80">Duplicate links are=
+ created by resolving an issue as Duplicate (or Voted Duplicate).&nbsp; Dup=
+licate links are one-direction.&nbsp; A duplicate points to an issue that h=
+as a different resolution (or is a duplicate of yet another issue with a re=
+solution).&nbsp; If the chain of duplicate links ever points back to an ori=
+ginating resource, that's an error.&nbsp; Duplicate links must be to the sa=
+me project and specification.</li>
+ <li data-uuid=3D"dee16ba6-8cdf-4c9d-afbe-9708aaa7d5f1">Related issue links=
+ are managed using the "Adjust Relations" transition.&nbsp; These are techn=
+ically one-direction, though the same relation appears on both the source a=
+nd target issue.&nbsp; Related issues can point to anything - they don't ha=
+ve to be specification issues.</li>
+</ul>
+<h2 id=3D"ManagingSpecificationFeedback-Editingissues">Editing issues</h2>
+<p>Edits should be done with caution:</p>
+<ul>
+ <li>It's ok to edit descriptions and summaries, but only to correct spelli=
+ng or grammar issues that might affect readability or searchability, never =
+to change the context of what's requested unless there's a record of a comm=
+ent from the original submitter requesting the change.&nbsp; Additional cla=
+rifications should be captured as comments, not edits.</li>
+ <li>Changes to categorization (relevant artifacts, pages, links sections) =
+should also be made with caution, especially if the item is tied to a ballo=
+t submission.&nbsp; The scope of the comment can't be increased or decrease=
+d</li>
+ <li>It's fine to add additional "Request in-person" individuals if you're =
+confident they wouldn't mind being added (though it's good to add a comment=
+ to explain why), but no one should ever be removed without their request</=
+li>
+ <li>If you're going to change the work group assigned, you should provide =
+a comment explaining why</li>
+</ul>
+<p>There are four mechanisms for modifying the content of an issues:</p>
+<h3 id=3D"ManagingSpecificationFeedback-Editworkflowoption">Edit workflow o=
+ption</h3>
+<p>As described on the base&nbsp;<a class=3D"createlink" href=3D"/pages/cre=
+atepage.action?spaceKey=3DHL7&amp;title=3DSpecificationFeedback-Editinganis=
+sue&amp;linkCreation=3Dtrue&amp;fromPageId=3D40738654&amp;atl_token=3Da4ca6=
+4ec11370d71cb3477a89586298538a111bd">Specification Feedback</a> page, this =
+is the only edit option available to regular users.&nbsp; It is only availa=
+ble to the reporter, allows editing of a limited number of fields and can o=
+nly be used if the issue has not been linked to another issue (e.g. ballot =
+vote, duplicate, etc.).&nbsp; If you're a manager or administrator,&nbsp;yo=
+u&nbsp;<strong>won't</strong> have access to this option - because you can =
+use one of the other options listed below that are more useful/powerful.</p=
+>
+<h3 id=3D"ManagingSpecificationFeedback-Editmenuitem">Edit menu item</h3>
+<p>Just click on the&nbsp;<em>Edit</em> button on the left-hand side right =
+under the issue summary.&nbsp; This will let you edit all of the "editable"=
+ fields for the issue.&nbsp; The only fields you can't change this way are:=
+</p>
+<ul>
+ <li><strong>Assign</strong>&nbsp;- this field can only be changed by using=
+ the&nbsp;<em>Assign</em>&nbsp;button or the&nbsp;<em>Assign to me</em>&nbs=
+p;link=20
+  <ul>
+   <li><em>Assignee</em></li>
+  </ul></li>
+ <li><strong style=3D"letter-spacing: 0.0px;">Non-changeable</strong> - the=
+se fields are either fixed or calculated and cannot be edited<br>
+  <ul>
+   <li><em>Reporter</em></li>
+   <li><em>Outstanding Negatives</em></li>
+  </ul></li>
+ <li><strong style=3D"letter-spacing: 0.0px;">Move only</strong> - these fi=
+elds can only be changed by 'Moving' the issue - see below=20
+  <ul>
+   <li><em>Project</em></li>
+   <li><em>Issue Type</em></li>
+  </ul></li>
+ <li><strong>Workflow</strong> <strong>only </strong>- these fields can onl=
+y be changed by pressing one of the workflow buttons.&nbsp; The workflows a=
+nd associated fields are listed below:<em><br></em>
+  <ul>
+   <li>Duplicate=20
+    <ul>
+     <li><em>Duplicate Issue</em></li>
+    </ul></li>
+   <li>Change Workgroup=20
+    <ul>
+     <li><em>Work Group</em></li>
+    </ul></li>
+   <li>"Propose Disposition" (or one of the actual disposition transactions=
+)=20
+    <ul>
+     <li><em>Applied for Version</em></li>
+     <li><em>Change Category</em></li>
+     <li><em>Change Impact</em></li>
+     <li><em>Pre-applied</em></li>
+     <li><em>Resolution</em></li>
+     <li><em>Resolution Description</em></li>
+     <li><em>Resolution Vote</em></li>
+     <li><em>Vote Date</em></li>
+    </ul></li>
+  </ul></li>
+</ul>
+<h3 id=3D"ManagingSpecificationFeedback-Editingfromthe'view'screen">Editing=
+ from the 'view' screen</h3>
+<p>In addition to using the 'edit' button, you can also just click on one o=
+f the editable fields displayed in the 'view' screen and change the values.=
+&nbsp; However, because the view screen only displays fields that have valu=
+es, you'll have to use the&nbsp;<em>Edit</em> button if you want to set a v=
+alue for a field that doesn't yet have one.</p>
+<h3 id=3D"ManagingSpecificationFeedback-WorkflowTransitions">Workflow Trans=
+itions</h3>
+<p>As mentioned above, there are certain fields that are only changeable by=
+ invoking one of the workflow options.&nbsp; Exactly which fields will be a=
+vailable will depend on which workflow is invoked.</p>
+<h2 id=3D"ManagingSpecificationFeedback-Movingissues">Moving issues</h2>
+<p>Sometimes when an issue is created, it'll be captured under the wrong fe=
+edback project (e.g. CDA issue captured under the FHIR project) or the issu=
+e type will be incorrect (e.g. Question that's really a Change Proposal).&n=
+bsp; Fixing these requires "moving" the issue rather than a simple update.&=
+nbsp; That's because the fields, statuses, resolutions, etc. associated wit=
+h the issue can theoretically change when changing the Project or the Issue=
+ Type.&nbsp; Jira will allow you to move an issue to or from any other proj=
+ect in Jira, but you'll run into a disconnect of fields unless you limit mo=
+ves to only be with other Specification Feedback projects.&nbsp; (And might=
+ run into issues even then if the specification feedback projects have dive=
+rged from the standard template.)</p>
+<p>Moving is only possible when items aren't yet resolved (i.e. status is <=
+em>Submitted</em>,&nbsp;<em>Triaged</em> or&nbsp;<em>Waiting for Input</em>=
+.&nbsp; Particular caution is needed if moving an item that is tied to a ba=
+llot vote.&nbsp; In general, don't move items that are ballot-related, espe=
+cially if they're weighted as normative.&nbsp; Instead resolve the existing=
+ issue as appropriate for its current categorization and create a new relat=
+ed issue, if appropriate.</p>
+<p>To move an issue:</p>
+<ol>
+ <li>click on&nbsp;<em>More</em>,&nbsp;<em>Move</em><em><br></em></li>
+ <li>Specify the new <em>Project</em> and/or <em>Issue Type</em>, then pres=
+s&nbsp;<em>Next</em></li>
+ <li>You'll see a list of fields that have been removed and added - these s=
+hould all be Message fields, which you don't need to worry about.&nbsp; Pre=
+ss <em>Move&nbsp;</em>to confirm</li>
+</ol>
+<p><strong>IMPORTANT:</strong> Never move issues except between issue types=
+ within a single project or across Specification Feedback projects.&nbsp; I=
+.e. moving between FHIR, CDA, V2 and Other is ok, though items that have be=
+en balloted should never be moved except within the same project.&nbsp; NEV=
+ER move a Specification Feedback to a non-specification feedback tracker.&n=
+bsp; I<span style=3D"color:#333333;">f the result of a spec feedback tracke=
+r item is the need to create a UTG request or new project or some other act=
+ion, then create a brand new issue and link that issue to the existing feed=
+back issue. Moving issues will likely break the<span>&nbsp;</span></span><s=
+pan class=3D"alert-word" style=3D"color:#333333;">workflow</span><span styl=
+e=3D"color:#333333;"><span>&nbsp;</span>processes associated with the new p=
+roject and will also mean that the issue will no longer show up in queries =
+of the Spec Feedback project. (And if the issue was associated with ballots=
+, it'll no longer show up in ballot counts, etc.)</span></p>
+<h2 id=3D"ManagingSpecificationFeedback-Cloningissues">Cloning issues</h2>
+<p>Sometimes you may want make multiple copies of an issue.&nbsp; For examp=
+le, the same problem might exist in resources associated with multiple work=
+ groups.&nbsp; Rather than re-typing the information for each issue, you ca=
+n create a single issue and 'clone' it, then adjust each to reflect the app=
+ropriate work group and issues.</p>
+<p>To clone an issue:</p>
+<ol>
+ <li>click on&nbsp;<em>More</em>,&nbsp;<em>Clone</em></li>
+ <li>Adjust the summary (don't create an issue with the word 'CLONE' in the=
+ summary) and click&nbsp;<em>Create</em></li>
+</ol>
+<h2 id=3D"ManagingSpecificationFeedback-Workflows">Workflows</h2>
+<p>One of the major functions of managers is to progress the issue through =
+the issue workflow.&nbsp; This will mean choosing actions from the workflow=
+ menu.&nbsp; The set of options available to managers will be much broader =
+than for regular users.&nbsp; As a result, it'll be important to look for o=
+ptions under the&nbsp;<em>Workflow</em> menu button as well as the two opti=
+ons immediately to the left of it.</p>
+<h2 id=3D"ManagingSpecificationFeedback-Triagingissues">Triaging issues</h2=
+>
+<p>The&nbsp;<em>Submitted</em> state is a temporary state that allows revie=
+w of the issue content prior to work groups needing to concern themselves w=
+ith the issue.&nbsp; Typically, work groups will ignore content in the&nbsp=
+;<em>Submitted</em> state (in part because it's quite likely that no work g=
+roup has even been assigned to the issue).&nbsp; Instead, specifically desi=
+gnated managers (who will often also have administrator privileges) will re=
+view new proposals and ensure that they are complete and clear and ready fo=
+r work groups to deal with.&nbsp; Specifically, that means checking the fol=
+lowing:</p>
+<ol>
+ <li>Does the issue contain content that violates <a href=3D"/spaces/HL7/pa=
+ges/5997959/HL7+Acceptable+Use+Policy">HL7's Acceptable Use Policy</a>&nbsp=
+;(e.g. vulgarity, advertising, rudeness, etc.)?&nbsp; If so, the webmaster =
+should be informed so that the user can be reprimanded/banned and the issue=
+ Deleted.&nbsp; (This requires administrative privileges.)</li>
+ <li>Check and make sure that issue has been submitted under the appropriat=
+e <em>Project</em> and with the <em>Issue Type</em>.&nbsp; E.g. If it's a c=
+hange that falls within the category of a technical correction but it hasn'=
+t been categorized as one.&nbsp; If not, then&nbsp;<em>Move</em> the issue =
+to the appropriate Project and Issue Type.</li>
+ <li>Is the issue sufficiently clear that a work group could reasonably mak=
+e a decision about the issue?&nbsp; If not, the issue should be "Assigned" =
+to the reporter, with a comment providing guidance on what additional clari=
+ty/detail is needed to make the issue actionable.&nbsp; (Assigning the issu=
+e will automatically change the status to <em style=3D"letter-spacing: 0.0p=
+x;">Waiting for Input</em>.)&nbsp; The issue can also be 'Assigned' if info=
+rmation is needed from some other party prior to making a triage decision.<=
+/li>
+ <li>Is the issue a duplicate of something that's already been submitted?&n=
+bsp; If so, mark it as a duplicate (see below)</li>
+ <li>If the issue is a technical correction, evaluate whether the requested=
+ change is obviously needed and, if so, auto-approve it.&nbsp; This will tr=
+ansition it right to "Resolved - Change required".</li>
+ <li>Otherwise, click the <em>Triage</em> button and&nbsp;ensure that other=
+ elements are appropriate filled in (artifacts, pages, release, etc. and th=
+at the issue has been tied to the appropriate&nbsp;<em>Work Group</em>.&nbs=
+p; When you press "ok", the issue status will progress to "Triaged".&nbsp; =
+(Note that Work Group is mandatory to progress to Triaged.)</li>
+</ol>
+<h2 id=3D"ManagingSpecificationFeedback-WaitingforInput">Waiting for Input<=
+/h2>
+<p>Issues can be assigned to others for a variety of reasons.&nbsp; They mi=
+ght be assigned to the reporter to provide more clarification.&nbsp; They m=
+ight be assigned to a domain expert for investigation or additional advice.=
+&nbsp; They might be assigned to an implementer to report back on connectat=
+hon or other experience, etc.&nbsp; Any time additional information is requ=
+ired before a work group feels comfortable resolving an issue, the issue ca=
+n be assigned to someone whose responsibility is to provide that additional=
+ information.</p>
+<p>Note that Assignment is only possible to users with an HL7 Jira account.=
+&nbsp; This should be most co-chairs and faclitators, as well as anyone who=
+ has ever submitted a feedback issue, including those who have submitted ba=
+llots - so a pretty wide pool of people.&nbsp; If you want to assign to som=
+eone who doesn't have a Jira account, you'll need to prompt them to create =
+an account first.</p>
+<p>Assignment is only possible to a specific person, not a group or organiz=
+ation.&nbsp; The assigned person may involve others in gathering the inform=
+ation needed to provide the answer, but only the specific assignee will rec=
+eive the weekly emails reminding them to provide the requested information.=
+</p>
+<p>Work groups are still responsible for the timely resolution of tracker i=
+tems even if they're currently "waiting for input".&nbsp; If an issue is st=
+alled with the current assignee and the assignee is unresponsive to reminde=
+rs/queries for a period of weeks or months, it may be necessary to find an =
+alternate assignee or find some other mechanism to move the issue forward.<=
+/p>
+<p>Once input has been provided, the issue will automatically return to eit=
+her "Submitted" (if no&nbsp;<em>Work Group</em> is provided) or "Triaged" (=
+if&nbsp;<em>Work Group</em> does exist<em>).</em></p>
+<h2 id=3D"ManagingSpecificationFeedback-Duplicate">Duplicate</h2>
+<p>Users&nbsp;<strong>should</strong> ideally search through existing issue=
+s before raising a new issue, but not everyone does (and even if they do, n=
+ot everyone will find relevant duplicates).&nbsp; Marking an issue as a dup=
+licate says "All discussion - and eventual resolution - of this issue will =
+be conducted on the referenced duplicate issue".&nbsp; This allows work gro=
+ups to be more efficient and lessens the chances of coming up with conflict=
+ing resolutions to what is essentially the same issue.</p>
+<p>It's only possible to mark an issue as being a duplicate with an issue t=
+hat's still "open" - i.e. Submitted, Triaged or Waiting for Input.&nbsp; If=
+ an issue duplicates an issue that's already resolved, it can be voted as "=
+Considered - No change required" with a reference to the resolved issue.</p=
+>
+<p>To be considered a duplicate, the issue must be the same as the referenc=
+ed duplicate and can't have additional information that might lead the work=
+ group to make a different decision.&nbsp; If two issues are closely relate=
+d, but not strictly duplicates, you can link them using the&nbsp;<em>Relate=
+d Issues</em> field.</p>
+<p>If two issues are true duplicates, but each have relevant comments, add =
+a comment to the surviving "target" issue from the comments of the 'duplica=
+te' issue, providing attribution as relevant.&nbsp; That way someone readin=
+g the surviving issue can see all of the key points without needing to navi=
+gate to any of the linked duplicates.</p>
+<p>Be particularly cautious about marking issues as duplicates if they have=
+ associated ballot comments because doing so will transfer the ballot comme=
+nts to the "surviving" issue.&nbsp; As well, the process will enforce that =
+the issue type, specification, artifacts and pages associated with the surv=
+iving issue are a match for the votes to be moved and, if not, will prevent=
+ the duplicate assertion.</p>
+<p>A vote isn't required to mark an issue as a duplicate.&nbsp; However, ha=
+ving a vote is a good practice for normative issues unless the duplication =
+is super-obvious (i.e. the issue looks to be a copy &amp; paste of the orig=
+inal).</p>
+<h2 id=3D"ManagingSpecificationFeedback-VotedDuplicate">Voted Duplicate</h2=
+>
+<p>This transition allows a manager to mark an issue as a duplicate of an i=
+ssue that's already been closed.&nbsp; However, because the target has been=
+ closed and won't be subject to discussion, it's necessary to hold a formal=
+ vote to resolve the issue as 'duplicate.&nbsp; The process is the same, th=
+e only difference is that the criteria are relaxed for what issues can be r=
+eferenced.&nbsp; The issue must be for the same project and specification.<=
+/p>
+<h2 id=3D"ManagingSpecificationFeedback-ResolvingTriagedIssues">Resolving T=
+riaged Issues</h2>
+<p>Once issues have been triaged, it then falls on the responsible work gro=
+up to resolve the issue - answer the question; approve or reject the change=
+ proposal, etc.&nbsp;&nbsp;In some cases, work groups will need to vote to =
+approve the disposition.&nbsp; In other cases, the issue can be resolved wi=
+thout a vote.&nbsp; The resolutions permitted and whether a vote is require=
+d are dependent on the type of issue raised.&nbsp; The following table prov=
+ides a high-level summary of the possible workflow steps that are possible =
+for a Triaged issue.&nbsp; The columns represent the different&nbsp;<em sty=
+le=3D"letter-spacing: 0.0px;">ssue Types</em>&nbsp;allowed for Specificatio=
+n Feedback items.&nbsp; The rows list what <em style=3D"letter-spacing: 0.0=
+px;">Resolutions</em>&nbsp;are possible.&nbsp; Cells show what workflow tra=
+nsitions (italicized text) can be used to achive that resolution and what f=
+ields can be (or if&nbsp;<strong style=3D"letter-spacing: 0.0px;">bold</str=
+ong>, must be) set as part of the transition.&nbsp; Empty cells indicate th=
+at the <em style=3D"letter-spacing: 0.0px;">Resolution</em> is not applicab=
+le for that&nbsp;<em style=3D"letter-spacing: 0.0px;">Issue Type</em>.</p>
+<div class=3D"table-wrap">
+ <table class=3D"wrapped confluenceTable">
+  <colgroup>
+   <col style=3D"width: 80.0px;">
+   <col style=3D"width: 126.0px;">
+   <col style=3D"width: 454.0px;">
+   <col style=3D"width: 426.0px;">
+   <col style=3D"width: 166.0px;">
+   <col style=3D"width: 166.0px;">
+  </colgroup>
+  <tbody>
+   <tr>
+    <th colspan=3D"1" class=3D"confluenceTh"><br></th>
+    <th colspan=3D"1" class=3D"confluenceTh"><br></th>
+    <th style=3D"text-align: center;" colspan=3D"4" class=3D"confluenceTh">=
+<strong>Issue Type</strong></th>
+   </tr>
+   <tr>
+    <th colspan=3D"1" class=3D"confluenceTh">Target Status</th>
+    <th class=3D"confluenceTh"><span style=3D"color:#333333;">Resolution</s=
+pan></th>
+    <th style=3D"text-align: center;" class=3D"confluenceTh"><span style=3D=
+"color:#333333;">Change </span><br><span style=3D"color:#333333;">Proposal<=
+/span></th>
+    <th style=3D"text-align: center;" class=3D"confluenceTh"><span style=3D=
+"color:#333333;">Technical</span><br><span style=3D"color:#333333;">Correct=
+ion</span></th>
+    <th style=3D"text-align: center;" class=3D"confluenceTh"><span style=3D=
+"color:#333333;">Question</span></th>
+    <th style=3D"text-align: center;" class=3D"confluenceTh"><span style=3D=
+"color:#333333;">Comment</span></th>
+   </tr>
+   <tr>
+    <th rowspan=3D"3" class=3D"confluenceTh">Resolved - Change Required (or=
+ Applied)<br><br></th>
+    <th class=3D"confluenceTh">Persuasive</th>
+    <td class=3D"highlight-green confluenceTd" style=3D"text-align: left;" =
+title=3D"Background colour : Green" rowspan=3D"3" data-highlight-colour=3D"=
+green">
+     <p title=3D""><span style=3D"color:#333333;"><em>Will Update Spec</em>=
+ or <em>Approve Pre-applied Request</em></span></p>
+     <p title=3D""><strong>Resolution, ResolutionVote, VoteDate, ChangeCate=
+gory, ChangeImpact, </strong>ResolutionDescription (Required unless Persuas=
+ive), Assignee, PreApplied, AppliedForVersion</p>
+     <p title=3D""><br></p>
+     <p title=3D""><span style=3D"color:#333333;">&nbsp;</span></p><br>
+     <p style=3D"text-align: left;" title=3D""><br></p></td>
+    <td class=3D"highlight-green confluenceTd" style=3D"text-align: left;" =
+title=3D"Background colour : Green" data-highlight-colour=3D"green">
+     <p title=3D""><span style=3D"color:#333333;"><em>Will Fix</em> or <em>=
+Approve Pre-applied Fix</em></span></p>
+     <p title=3D""><span style=3D"color:#333333;">ResolutionDescription, Ch=
+angeCategory (must be Technical Correction), ChangeImpact (must be Non-subs=
+tantive) Assignee, PreApplied, AppliedForVersion</span></p></td>
+    <td style=3D"text-align: left;" class=3D"confluenceTd"><br></td>
+    <td style=3D"text-align: left;" class=3D"confluenceTd"><br></td>
+   </tr>
+   <tr>
+    <th class=3D"confluenceTh">Persuasive with Modification</th>
+    <td style=3D"text-align: left;" class=3D"confluenceTd"><br></td>
+    <td style=3D"text-align: left;" class=3D"confluenceTd"><br></td>
+    <td style=3D"text-align: left;" class=3D"confluenceTd"><br></td>
+   </tr>
+   <tr>
+    <th class=3D"confluenceTh">Not Persuasive with Modification</th>
+    <td style=3D"text-align: left;" class=3D"confluenceTd"><br></td>
+    <td style=3D"text-align: left;" class=3D"confluenceTd"><br></td>
+    <td style=3D"text-align: left;" class=3D"confluenceTd"><br></td>
+   </tr>
+   <tr>
+    <th rowspan=3D"3" class=3D"confluenceTh"><span>Resolved - No Change</sp=
+an><br><br><br><br></th>
+    <th class=3D"highlight-grey confluenceTh" style=3D"text-align: left;" t=
+itle=3D"Background colour : Grey" data-highlight-colour=3D"grey">
+     <p style=3D"text-align: left;" title=3D""><span>Not Persuasive</span><=
+/p></th>
+    <td class=3D"highlight-green confluenceTd" style=3D"text-align: left;" =
+title=3D"Background colour : Green" data-highlight-colour=3D"green">
+     <p title=3D""><em><span style=3D"color:#333333;">Reject Request</span>=
+</em></p>
+     <p title=3D""><span style=3D"color:#333333;"><strong>Resolution, Resol=
+utionVote, VoteDate</strong></span></p></td>
+    <td class=3D"highlight-green confluenceTd" style=3D"text-align: left;" =
+title=3D"Background colour : Green" data-highlight-colour=3D"green">
+     <p title=3D""><em><span style=3D"color:#333333;">Reject Fix</span></em=
+></p>
+     <p title=3D""><span style=3D"color:#333333;"><strong>ResolutionDescrip=
+tion</strong></span></p></td>
+    <td style=3D"text-align: left;" class=3D"confluenceTd"><br></td>
+    <td style=3D"text-align: left;" class=3D"confluenceTd"><br></td>
+   </tr>
+   <tr>
+    <th class=3D"confluenceTh">
+     <p>Considered - No action required</p></th>
+    <td style=3D"text-align: left;" class=3D"confluenceTd"><br></td>
+    <td style=3D"text-align: left;" class=3D"confluenceTd"><br></td>
+    <td style=3D"text-align: left;" class=3D"confluenceTd"><br></td>
+    <td class=3D"highlight-green confluenceTd" style=3D"text-align: left;" =
+title=3D"Background colour : Green" data-highlight-colour=3D"green">
+     <p style=3D"text-align: left;" title=3D""><span style=3D"color:#333333=
+;"><em>Acknowledge Comment</em></span></p>
+     <p style=3D"text-align: left;" title=3D""><span style=3D"color:#333333=
+;">ResolutionDescription</span></p></td>
+   </tr>
+   <tr>
+    <th style=3D"text-align: left;" class=3D"confluenceTh"><span>Considered=
+ - Question answered</span></th>
+    <td style=3D"text-align: left;" class=3D"confluenceTd"><br></td>
+    <td style=3D"text-align: left;" class=3D"confluenceTd">
+     <p style=3D"text-align: left;" title=3D""><br></p></td>
+    <td class=3D"highlight-green confluenceTd" style=3D"text-align: left;" =
+title=3D"Background colour : Green" data-highlight-colour=3D"green">
+     <p title=3D""><span style=3D"color:#333333;"><em>Answer Question</em><=
+/span></p>
+     <p title=3D""><strong><span style=3D"color:#333333;">ResolutionDescrip=
+tion</span></strong></p></td>
+    <td style=3D"text-align: left;" class=3D"confluenceTd"><br></td>
+   </tr>
+   <tr>
+    <th class=3D"confluenceTh">Deferred</th>
+    <th class=3D"confluenceTh">Considered for Future Use</th>
+    <td class=3D"highlight-green confluenceTd" style=3D"text-align: left;" =
+title=3D"Background colour : Green" data-highlight-colour=3D"green">
+     <p title=3D""><em>Defer Request</em></p>
+     <p title=3D""><strong>Resolution, ResolutionVote, VoteDate</strong></p=
+></td>
+    <td class=3D"highlight-green confluenceTd" style=3D"text-align: left;" =
+title=3D"Background colour : Green" data-highlight-colour=3D"green">
+     <p title=3D""><em>Defer Fix</em></p>
+     <p title=3D""><strong>ResolutionDescription</strong></p></td>
+    <td style=3D"text-align: left;" class=3D"confluenceTd"><br></td>
+    <td style=3D"text-align: left;" class=3D"confluenceTd"><br></td>
+   </tr>
+  </tbody>
+ </table>
+</div>
+<h2 id=3D"ManagingSpecificationFeedback-ResolvingBlockVotes">Resolving Bloc=
+k Votes</h2>
+<p>It's possible to put a single vote and date on multiple issues that alre=
+ady have resolutions.&nbsp; To do this:</p>
+<ul>
+ <li data-uuid=3D"28fcecd0-f09f-4c98-a8c4-2b7ebd4f4cf9">Place a 'Grouping' =
+on all issues to be voted.&nbsp; The Grouping must start with "Block-Vote".=
+&nbsp;</li>
+ <li data-uuid=3D"b3b9a716-3d83-4f7e-a88e-a1f157dec406">All issues must be =
+of type "change request" and for the same specification.&nbsp; (Issues with=
+ different specifications with the same Grouping will be ignored.)</li>
+ <li data-uuid=3D"8c985545-64a8-47a2-a632-9a9dc9f46b73">All issues must be =
+in a triaged status with a proposed resolution specified and all other nece=
+ssary elements populated (e.g. change impact, description, etc.) as per the=
+ rules of the resolution</li>
+ <li data-uuid=3D"7715a7b5-ac82-4f67-bba7-8ea288263b11">On <strong>one</str=
+ong> of the issues within the block, resolve it with the desired mover/seco=
+nder/vote information and vote date.</li>
+ <li data-uuid=3D"5ea6f3d0-c016-4330-acd8-9a091cd687a1">On the transitions =
+for that issue, click on the "Apply block vote" transition</li>
+ <li data-uuid=3D"8ac96fa4-e34c-4240-811d-3148944d840b">All of the associat=
+ed triaged change requests with the same grouping for that specification th=
+at have resolutions will be transitioned to the appropriate end state per t=
+heir proposed resolution with the specified vote information populated.</li=
+>
+</ul>
+<h3 class=3D"auto-cursor-target" id=3D"ManagingSpecificationFeedback-Common=
+questions">Common questions</h3>
+<p><strong>Q.&nbsp;</strong>What if I have a comment or question but want t=
+o make a change based on it?&nbsp;<strong>A.</strong>&nbsp;<em>Move</em> th=
+e issue to the appropriate type (if not a ballot item) or create a new rela=
+ted issue to handle the desired change.&nbsp; By definition, comments and q=
+uestions can't result in changes.</p>
+<p><strong>Q.&nbsp;</strong>Why can't I resolve a change request or technic=
+al correction as "Considered - No action required" or "Considered - Questio=
+n answered"?&nbsp;&nbsp;<strong>A.</strong> If someone has requested a chan=
+ge, then it must be resolved accordingly.&nbsp; If they haven't requested a=
+ change, the issue should be&nbsp;<em>Moved</em> to the appropriate Issue T=
+ype.</p>
+<p><strong>Q.</strong> Why can't I have a "Persuasive with Modification" or=
+ "Not Persuasive with Modification" resolution on Technical Corrections?&nb=
+sp;&nbsp;<strong>A.</strong>&nbsp;For something to be considered a "Technic=
+al Correction" it must be an obvious fix.&nbsp; If sufficient change is req=
+uired that the proposed change cannot be made with only minor modifications=
+, then the proposed change doesn't meet the expectations of being a "Techni=
+cal Correction" and it should be <em>Moved</em> to "Change Request" and tre=
+ated accordingly (e.g. resolution is voted on).</p>
+<p><strong>Q.&nbsp;</strong>Where's the "Not Related" resolution?&nbsp;&nbs=
+p;<strong>A.</strong>&nbsp;"Not Related" applies to a particular vote, not =
+to a feedback item.&nbsp; It's possible that the same feedback item might b=
+e voted on by multiple people - and possibly as part of multiple ballots.&n=
+bsp; The item might be "Not Related" for some ballots, but related for othe=
+rs.&nbsp; Even if found "Not Related" from a ballot reconciliation perspect=
+ive, the item might still be relevant and result in a change to the specifi=
+cation - either immediately or at some future point.</p>
+<p><strong>Q.&nbsp;</strong>Why aren't there votes except for Change Reques=
+ts?&nbsp;&nbsp;<strong>A.</strong>&nbsp;Comments and Questions do not resul=
+t in any change to the specification and Technical Corrections can't result=
+ in substantive or controversial changes to a specification.&nbsp; As well,=
+ none of them can be associated with negative votes.&nbsp; Work groups who =
+wish to vote on such items can do so and can record votes in their minutes =
+or, if they choose, capture votes on the issue using the&nbsp;<em>Propose R=
+esolution</em> transition.&nbsp; However, they are not needed and we do not=
+ want to encourage work groups to incur this overhead when resolving issues=
+.</p>
+<p><strong>Q.</strong> Why are there separate transitions for Pre-applied?&=
+nbsp;&nbsp;<strong>A.</strong>&nbsp;If an item has been marked as pre-appli=
+ed and a change is approved, the work group must decide whether the approve=
+d change is the same as the pre-applied change.&nbsp; The distinct transiti=
+ons help to enforce the need to make this determination.&nbsp; As well, if =
+the change has been made "as pre-applied", the transition will automaticall=
+y transition the status to "Applied" rather than just "Resolved - Change Re=
+quired".</p>
+<h3 id=3D"ManagingSpecificationFeedback-GuidanceonResolutionDescriptions">G=
+uidance on Resolution Descriptions</h3>
+<ul>
+ <li>For a Question must be the answer to the question</li>
+ <li>For Not Persuasive must be an explanation of why no change is being ma=
+de</li>
+ <li>For Persuasive with Modification, must be an explanation of what chang=
+e will be made</li>
+ <li>For Not Persuasive with Modification, must include an explanation of w=
+hy the proposed change won't be made as well as what change will be made</l=
+i>
+ <li>For a Comment, no description is required, but if desired a simple "Th=
+anks" or "Ok" or something can be included</li>
+ <li>For Persasive, no description is required, but if desired a more detai=
+led description of what change will be made will be useful.&nbsp; E.g. inte=
+nded new wording when the submittted issue just said "clarify".</li>
+</ul>
+<h2 id=3D"ManagingSpecificationFeedback-AdditionalGuidance">Additional Guid=
+ance</h2>
+<ul>
+ <li>Persuasive, Persuasive with Mod and Not Persuasive with Mod means that=
+ there's a commitment to modify the specification (either directly or throu=
+gh tooling) as part of the next release (or whatever release is indicated f=
+or the change).&nbsp; If there is no intention to make a change&nbsp;<stron=
+g>because of this specific issue</strong>, then those resolutions can't be =
+used.</li>
+ <li>If you are <strong>not</strong> going to make a change because of the =
+specific issue (e.g. because the issue is addressed/superceded by another n=
+on-duplicate issue), you might need to find the resolution Not Persuasive e=
+ven if you agree with the intent of the balloter.&nbsp; It's also possible =
+to find an issue "Not Persuasive" and include in the resolution a reference=
+ to a new tracker intended to address the underlying issue.&nbsp; (E.g. if =
+the comment is tied to a ballot and thus transfer to a different work group=
+/change of scope is not appropriate.)</li>
+ <li>The mover and seconder in a vote must include both first name and last=
+ name.&nbsp; The whole vote must be captured in the format specified - move=
+r and seconder separated by a "/", the seconder followed by a ":" and the f=
+or, against and abstain vote numbers separated by "-"</li>
+ <li>When recording a vote, make sure the vote actually passes - i.e. affir=
+matives &gt; negatives.&nbsp; Also, you should have more than one affirmati=
+ve vote.</li>
+ <li>AppliedForVersion is assumed to be the "next release" unless otherwise=
+ specified</li>
+ <li>If you need a version, specification, artifact or page that's not in t=
+he drop-downs, talk to one of the administrators for the Specification Feed=
+back project for your product family.&nbsp; (And if you don't know who that=
+ is, reach out to&nbsp;<a href=3D"mailto:webmaster@hl7.org." class=3D"exter=
+nal-link" rel=3D"nofollow">webmaster@hl7.org.</a></li>
+ <li>If you're updating the descriptive information for an issue during a c=
+all and haven't decided what the resolution should be yet, consider using t=
+he&nbsp;<em>Propose Disposition</em> action - it'll let you fill everything=
+ in, including the vote once a decision is made.&nbsp; However, don't forge=
+t to click the actual disposition button once you're done.&nbsp; The resolu=
+tion isn't official until the status is changed - and that doesn't happen u=
+ntil you hit the appropriate workflow button.</li>
+ <li>Pre-applying changes (making a change to the specification source prio=
+r to approval) may be useful in a couple of situations:=20
+  <ul>
+   <li>When approval of the change seems pretty much a "slam dunk" and you'=
+re trying to meet a deadline</li>
+   <li>When it might be hard for the work group to understand the impact of=
+ a change without seeing it</li>
+  </ul></li>
+ <li>In either case, make sure it's easy to roll back the change if it isn'=
+t approved (or isn't approved as pre-applied).&nbsp; Also, be sure to set t=
+he <em>Pre-applied</em>&nbsp;flag so that everyone remembers that it may be=
+ necessary to roll back the change (or that no further change will be neces=
+sary) once the final resolution decision is made.</li>
+ <li>It&nbsp;<strong>is</strong> permissible to resolve issues that are rai=
+sed during during ballots (whether voted on or not) prior to ballot closure=
+.</li>
+</ul>
+<h2 id=3D"ManagingSpecificationFeedback-Comments">Comments</h2>
+<p>Comments are an important part of issue resolution.&nbsp; They provide a=
+n opportunity for people who have opinions or insight on a proposal to shar=
+e that information with the group that will make the decision.&nbsp; They a=
+lso provide a mechanism to provide guidance about what information is neede=
+d when&nbsp;<em>Waiting for Input</em>.&nbsp; Finally, they allow recording=
+ interim discussion or decisions when a work group reviews an item but don'=
+t reach a decision.</p>
+<p>Comments against an issue should&nbsp;<strong>always</strong>&nbsp;be re=
+viewed before making a final decision on the disposition of an issue.</p>
+<p>Regular users are restricted to only recording comments against "open" i=
+ssues.&nbsp; Once an issue has been resolved, they can't comment anymore.&n=
+bsp; If they want to raise a point of discussion, this needs to be done as =
+a new issue (or on a discussion forum).&nbsp; That's because work groups do=
+n't necessarily look at comments made against resolved issues and the feedb=
+ack might be ignored.</p>
+<p>On the other hand, managers&nbsp;<strong>can</strong>&nbsp;comment on is=
+sues once they've closed.&nbsp; This allows capturing additional thoughts d=
+uring the "Apply" phase, thoughts on a deferred issue to be considered when=
+ it comes back, etc.&nbsp; However, be cautious when taking advantage of th=
+is capability and be aware that work groups might well not look at whatever=
+ comments have been recorded.</p>
+<h2 id=3D"ManagingSpecificationFeedback-Post-resolutiontransitions">Post-re=
+solution transitions</h2>
+<h3 id=3D"ManagingSpecificationFeedback-Re-openinganissue">Re-opening an is=
+sue</h3>
+<p>After a decision has been made on how to resolve an issue, sometimes the=
+re's a need to change that decision.&nbsp; Perhaps the workgroup realizes t=
+hat they misinterpreted the issue or there's a problem applying the resolut=
+ion as agreed.&nbsp; For "duplicate" issues, you can mark them Non-Duplicat=
+e.&nbsp; (Note that this will not return votes migrated to the duplicate is=
+sue, which is why marking voted issues as duplicates needs to be done with =
+considerable caution.)</p>
+<p>For other statuses, you can "Re-open".&nbsp; Re-opening an item is only =
+possible if there aren't withdrawn items for "locked" ballots.&nbsp; I.e. I=
+f someone has withdrawn a negative on the basis of a resolution and the fin=
+al vote count has been taken, then the resolution must stand as written.&nb=
+sp; Re-opening will require a comment explaining why the item is being re-o=
+pened.&nbsp;</p>
+<p>Once re-open performed, the original work group disposition information =
+will be copied into a comment and wiped from the disposition fields.&nbsp; =
+Any ballot votes withdrawn based on the previous resolution will be reinsta=
+ted and ballot totals will be updated accordingly.</p>
+<p>Re-opening issues generally requires a vote.</p>
+<p>In short - don't re-open ballot-related issues without good cause.</p>
+<h3 id=3D"ManagingSpecificationFeedback-Applyingchanges">Applying changes</=
+h3>
+<p>Once a resolution of <em>Resolved - Change Required</em>&nbsp;has been a=
+pproved, the change can be applied to the specification's source - whether =
+managed in Git or in some other environment.&nbsp; Once the change has been=
+ applied, that should be reflected by clicking the&nbsp;<em>Change</em><em>=
+ Applied</em>&nbsp;button.&nbsp; If the change is captured using source con=
+trol, the Git commit id should be included in the "change applied" comment =
+- and the Jira issue id should be included in the commit message.&nbsp; If =
+there are any deviations as part of the change application, those should be=
+ noted as well.</p>
+<p>Sometimes when you get to apply a change, you may find it's already been=
+ done (as part of some other change request, or perhaps as incidental clean=
+-up of typos and grammar as someone was fixing other things).&nbsp; In that=
+ case, mark the item as "applied" and just note that the change was already=
+ made by someone else.&nbsp; The same thing holds if there's a request for =
+a correction to text or an artifact that no longer exists as a result of an=
+other change.</p>
+<p>In other cases, the desired change may still be possible to apply, but m=
+ight not make sense based on other changes that have occurred.&nbsp; In tha=
+t case, the issue will need to be re-opened and re-voted.</p>
+<p>If something has been marked as "applied" in error, it can be transition=
+ed back to&nbsp;<em>Resolved - Change Required</em> by pushing the&nbsp;<em=
+>Not Applied</em> button.</p>
+<h3 id=3D"ManagingSpecificationFeedback-Publishingchanges">Publishing chang=
+es</h3>
+<p>Marking applied changes as "published" can only be done by an administra=
+tor.&nbsp; That step is only done when a new release of the artifact is off=
+icially published.&nbsp; If an applied changed gets missed being marked as =
+published by accident, simply let an administrator know.</p>
+<p>If something has been marked as "published" in error, it can be trasitio=
+ned back to&nbsp;<em>Applied</em> by pushing the&nbsp;<em>Not Published</em=
+> button.&nbsp; This can be performed by managers, not just administrators.=
+</p>
+<h2 id=3D"ManagingSpecificationFeedback-Bulkchanges">Bulk changes</h2>
+<p><span class=3D"confluence-anchor-link" id=3D"ManagingSpecificationFeedba=
+ck-bulk-change"></span>Managers will often need to make changes to a set of=
+ issues at the same time - marking them as scheduled for a particular meeti=
+ng, transitioning a bunch of typos to auto-approved, marking issues for blo=
+ck vote - or applying the results of a block vote.&nbsp; All of these objec=
+tives can be accomplished using the "bulk change" mechanism described in th=
+e&nbsp;<a href=3D"/spaces/HL7/pages/19136736/Specification+Feedback#Specifi=
+cationFeedback-Bulkchanges">general Specification Feedback documentation</a=
+>.&nbsp; However, in addition to the limited transitions open to regular us=
+ers, managers can perform all of the transitions they have access to - such=
+ as&nbsp;<em>Traige</em>&nbsp;or&nbsp;<em>Change Applied</em>.&nbsp; In add=
+ition, managers have access to the&nbsp;<em>Edit</em> function.&nbsp; So lo=
+ng as all the changes to be made to a particular group of issues are the sa=
+me, it's possible to change up to 1000 simultaneously - though only issues =
+that pass validation with the proposed changes will actually be updated.</p=
+>
+<p>A few things to keep in mind when making bulk edits:</p>
+<ul>
+ <li><span style=3D"color:#c9372c;"><strong>DO NOT</strong> <strong>use bul=
+k edit with any of the following fields:</strong>&nbsp;</span>
+  <ul>
+   <li><strong><strong>Raised in Version,&nbsp;</strong>Related Artifact(s)=
+, Related Page(s),&nbsp;<strong>Specification</strong></strong><br>
+    <ul>
+     <li>Enabling any one of these fields automatically enables all of them=
+ - and any field that's enabled will wipe the element if no new value is de=
+clared for it.&nbsp; A defect has been reported with the underlying plugin,=
+ but they've indicated they don't expect to fix this any time soon.</li>
+    </ul></li>
+   <li><strong>Development, Epic Link, Rank, Sprint, issueFunction</strong>=
+<br>
+    <ul>
+     <li>These fields aren't used by the Specification Feedback project, bu=
+t Jira doesn't provide a mechanism to hide/suppress them from the Bulk Edit=
+ view.&nbsp; Changing these fields could cause unexpected side effects</li>
+    </ul></li>
+   <li><strong>Outstanding Negatives</strong>
+    <ul>
+     <li>This is a calculated field and should never be manually edited.&nb=
+sp; (If you feel the value in it is incorrect for a given issue, please con=
+tact an administrator who can verify the issue, figure out what happened an=
+d correct it.)</li>
+    </ul></li>
+  </ul></li>
+ <li>You get to choose what fields you want to be included in an edit.&nbsp=
+; If you enable a field, as part of the edit, the value will be applied to =
+all issues selected in the bulk edit.&nbsp; If you don't specify a value fo=
+r the field, then the content of that field will be wiped for all issues.&n=
+bsp; (<strong>So&nbsp;</strong><strong>be careful!</strong>)</li>
+ <li>Use caution when editing fields that can contain multiple values like =
+Group or Schedule or that allow free text.&nbsp; Whatever values you specif=
+y will replace&nbsp;<strong>everything</strong> in that existing field - th=
+ere's no way to add or remove items from Group, Schedule, Request in Person=
+ or a text field like Resolution Description, you can only replace the full=
+ content.</li>
+ <li>The 'Send email' option at the bottom won't actually do anything.&nbsp=
+; Emails on individual updates is disabled.&nbsp; All issues affected by bu=
+lk edits will appear in the daily summary messages.</li>
+ <li>Edits can bypass transition rules</li>
+ <li>"Change Comment" doesn't actually change existing comments, it a new c=
+omment to all of the records</li>
+</ul>
+<p>Move will only be enabled if all of the selected issues are moveable (i.=
+e. all of the issues are Submitted, Triaged or Waiting-for-Input).</p>
+<h2 id=3D"ManagingSpecificationFeedback-Definingdynamicelements">Defining d=
+ynamic elements</h2>
+<p>Some of the drop-downs in Jira are dynamic.&nbsp;&nbsp;</p>
+<p><br></p>
+    </div>
+</body>
+</html>
+------=_Part_35171_974769143.1767902500718--

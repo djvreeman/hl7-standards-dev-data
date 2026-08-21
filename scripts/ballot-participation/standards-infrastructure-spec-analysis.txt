@@ -1,0 +1,18 @@
+# SOP operating model: inline JQL, created >= -400d (not filter 24407).
+# See scripts/documentation/README-standards-infrastructure-specs.md
+mkdir -p data/working/issue-analysis/2026/lookback
+python3 scripts/parse-jira-filter-export-csv-md.py \
+  -f '{"jql": "project in (FHIR, CDA, V2, OTHER) AND Specification is not EMPTY AND created >= -400d ORDER BY created DESC"}' \
+  -d 'key,fields.created,fields.customfield_11302,fields.spec_display_name,fields.issuetype.name,fields.status.name' \
+  -o data/working/issue-analysis/2026/lookback/20260821-all-spec-feedback-issues-400d \
+  -e csv --cache --cache-dir data/working/cache
+
+python3 scripts/parse-builds-web.py --recent --days 365
+
+python3 scripts/ballot-participation/ballot-infrastructure-specs-analyze.py \
+  --issues-csv data/working/issue-analysis/2026/lookback/20260821-all-spec-feedback-issues-400d.csv \
+  --recent-builds-csv data/working/builds/20260821-060233-recent-builds.csv \
+  -o data/working/ballot-participation/reports/2026-08-21-standards-infrastructure-specs.md \
+  --lookback-days 365 \
+  --data-gathering-date 2026-08-21 \
+  --csv data/working/ballot-participation/reports/2026-08-21-standards-infrastructure-specs.csv

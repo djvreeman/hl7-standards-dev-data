@@ -2,6 +2,7 @@
 data/working/
 data/example-commands/
 data/config/
+scripts/general-utils/create-confluence-page.py
 
 # GENERAL
 

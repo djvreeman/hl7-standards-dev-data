@@ -1,0 +1,15 @@
+# Salesforce API Configuration
+prod_server: "https://hl7.my.salesforce.com"
+version: "60.0"
+client_id: "your_connected_app_client_id"
+client_secret: "your_connected_app_client_secret"
+username: "your_salesforce_username"
+password: "your_salesforce_password_and_security_token"
+
+# Matching Configuration
+fuzzy_threshold: 70  # Minimum confidence score for fuzzy matching (0-100)
+auto_match_threshold: 90  # Threshold for auto-matching without human review
+
+# Optional: Customize Account query filters
+# You can modify the build_account_query() function in the script to change
+# which Account records are fetched from Salesforce 

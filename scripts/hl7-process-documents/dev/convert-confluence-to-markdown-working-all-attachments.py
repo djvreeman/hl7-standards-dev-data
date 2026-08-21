@@ -18,6 +18,32 @@ OUTPUT_DIR = config["output_dir"]
 PAGE_LIMIT = config.get("page_limit", 25)  # Default to 25 if not specified
 
 
+def verify_confluence_auth():
+    """Fail fast if the bearer token is missing or not authenticated."""
+    url = f"{BASE_URL}/rest/api/user/current"
+    headers = {"Authorization": f"Bearer {BEARER_TOKEN}", "Accept": "application/json"}
+    try:
+        response = requests.get(url, headers=headers, timeout=30)
+    except requests.RequestException as exc:
+        print(f"❌ Cannot reach Confluence at {BASE_URL}: {exc}")
+        raise SystemExit(1) from exc
+
+    if response.status_code != 200:
+        print(f"❌ Confluence auth check failed: HTTP {response.status_code}")
+        print(response.text[:500])
+        raise SystemExit(1)
+
+    user = response.json()
+    if user.get("type") == "anonymous" or user.get("displayName") == "Anonymous":
+        print("❌ Confluence bearer token is not valid (API returned Anonymous user).")
+        print("   Create a Personal Access Token in Confluence:")
+        print("   Profile → Settings → Personal Access Tokens")
+        print("   Then update confluence_bearer_token in data/config/config.json")
+        raise SystemExit(1)
+
+    print(f"✅ Authenticated as: {user.get('displayName', user.get('username', 'unknown'))}")
+
+
 def get_child_page_ids(parent_page_id):
     """
     Fetch child page IDs for a given parent page ID.
@@ -277,6 +303,8 @@ def extract_and_export_diagrams_and_attachments(page_content, page_id, markdown_
 
 def process_pages():
     """Process all pages specified in the configuration."""
+    verify_confluence_auth()
+
     for space_key in SPACE_KEYS:
         print(f"Processing space: {space_key}")
         space_output_dir = os.path.join(OUTPUT_DIR, sanitize_filename(space_key))
@@ -315,10 +343,12 @@ def process_pages():
                     md_file.write(markdown_content)
                 print(f"Converted page {title} to Markdown in space '{space_key}'.")
 
-    # Process explicitly specified page IDs
-    if PAGE_IDS:
-        misc_output_dir = os.path.join(OUTPUT_DIR, "miscellaneous")
-        os.makedirs(misc_output_dir, exist_ok=True)
+    if not PAGE_IDS and not PARENT_PAGE_IDS:
+        print("No confluence_page_ids or confluence_parent_page_ids configured; nothing to do.")
+        return
+
+    misc_output_dir = os.path.join(OUTPUT_DIR, "miscellaneous")
+    os.makedirs(misc_output_dir, exist_ok=True)
 
     # Fetch all page IDs to process
     all_page_ids = PAGE_IDS.copy()

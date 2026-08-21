@@ -83,6 +83,7 @@ import sys
 import pandas as pd
 from datetime import datetime
 from datetime import timezone
+import io
 
 # Default base URL
 DEFAULT_BASE_URL = "https://jira.hl7.org/rest/api/latest/search"
@@ -117,6 +118,7 @@ field_mappings = {
     'fields.reporter.displayName': 'Reporter',
     'fields.reporter.name': 'Reporter ID',
     'fields.issuetype.name': 'Issue Type',
+    'fields.status.name': 'Status',
     # History field mappings for common use cases
     'history_displayName': 'Applied User',  # For author.displayName when status changes to Applied
     'history_created': 'Applied Date',      # For created date when status changes to Applied
@@ -480,6 +482,36 @@ def extract_history_fields(histories, field_specs, debug_key=None):
     
     return results
 
+def process_raw_jira_data(raw_data, fields):
+    """Process raw JIRA API response data to extract specific fields."""
+    processed_data = []
+    
+    for item in raw_data:
+        processed_item = {}
+        
+        # Extract each requested field
+        for field in fields:
+            value = get_nested_value(item, field)
+            
+            # Handle list values - convert to comma-separated string
+            if isinstance(value, list):
+                if len(value) == 0:
+                    processed_item[field] = ""
+                elif len(value) == 1:
+                    processed_item[field] = str(value[0])
+                else:
+                    processed_item[field] = ", ".join(str(v) for v in value)
+            else:
+                processed_item[field] = value
+        
+        # Always include the key field for reference
+        if 'key' not in processed_item:
+            processed_item['key'] = item.get('key')
+            
+        processed_data.append(processed_item)
+    
+    return processed_data
+
 def should_fetch_history(item, filter_resolved=False):
     """Determine if we should fetch history for this issue."""
     if not filter_resolved:
@@ -490,7 +522,7 @@ def should_fetch_history(item, filter_resolved=False):
     return resolution_date is not None and resolution_date != ""
 
 def process_history_data(data_to_export, field_specs, bearer_token, batch_size=50, cache_dir=DEFAULT_CACHE_DIR, 
-                        cache_enabled=True, filter_resolved=False):
+                        cache_enabled=True, filter_resolved=False, history_json_file=None):
     """
     Process history data for the exported items in batches.
     
@@ -502,6 +534,7 @@ def process_history_data(data_to_export, field_specs, bearer_token, batch_size=5
         cache_dir: Directory for caching history data
         cache_enabled: Whether to use caching
         filter_resolved: Only process issues that have resolution dates
+        history_json_file: Optional path to save History data as JSON (if None, stores in CSV column)
         
     Returns:
         Updated data_to_export with history fields added
@@ -540,6 +573,25 @@ def process_history_data(data_to_export, field_specs, bearer_token, batch_size=5
         cache_enabled
     )
     
+    # Save History data to separate JSON file if specified
+    if history_json_file:
+        print(f"Saving History data to separate JSON file: {history_json_file}")
+        # Create directory if it doesn't exist
+        os.makedirs(os.path.dirname(history_json_file) if os.path.dirname(history_json_file) else '.', exist_ok=True)
+        
+        # Save as JSON object keyed by issue key
+        history_dict = {}
+        for issue_key, histories in all_histories.items():
+            if histories:
+                history_dict[issue_key] = histories
+        
+        try:
+            with open(history_json_file, 'w', encoding='utf-8') as f:
+                json.dump(history_dict, f, ensure_ascii=False, indent=2)
+            print(f"Saved History data for {len(history_dict)} issues to {history_json_file}")
+        except Exception as e:
+            print(f"Error saving History JSON file: {e}")
+    
     # Add history fields to each issue
     history_field_counts = {f"history_{spec[0].split('.')[-1]}": 0 for spec in field_specs}
     
@@ -549,6 +601,19 @@ def process_history_data(data_to_export, field_specs, bearer_token, batch_size=5
         issue_key = item.get('key')
         if issue_key in all_histories:
             histories = all_histories[issue_key]
+            
+            # Only store History in CSV if history_json_file is not specified (backward compatibility)
+            if not history_json_file:
+                # Store full history data as JSON string for analysis scripts (legacy mode)
+                if histories:
+                    try:
+                        item['History'] = json.dumps(histories, ensure_ascii=False)
+                    except (TypeError, ValueError) as e:
+                        print(f"Warning: Could not serialize history for {issue_key}: {e}")
+                        item['History'] = None
+                else:
+                    item['History'] = None
+            
             # Extract history fields based on criteria
             history_fields = extract_history_fields(histories, field_specs, issue_key if issue_key == 'FHIR-31820' else None)
             # Add extracted fields to the item
@@ -585,7 +650,7 @@ def process_history_data(data_to_export, field_specs, bearer_token, batch_size=5
     
     return data_to_export
 
-def export_to_csv(data, fields, filename, field_mappings, chosen_delimiter, add_type):
+def export_to_csv(data, fields, filename, field_mappings, chosen_delimiter, add_type, exclude_history_column=False):
     row_count = 0
     
     # Get all unique columns from the data
@@ -602,9 +667,14 @@ def export_to_csv(data, fields, filename, field_mappings, chosen_delimiter, add_
     import pandas as pd
     df = pd.DataFrame(data)
     
-    # Rename history columns using field_mappings
+    # Remove History column if exclude_history_column is True (when using separate JSON file)
+    if exclude_history_column and 'History' in df.columns:
+        print("Excluding 'History' column from CSV (stored in separate JSON file)")
+        df = df.drop(columns=['History'])
+    
+    # Rename all columns using field_mappings
     rename_map = {}
-    for key in history_fields:
+    for key in all_columns:
         if key in field_mappings:
             rename_map[key] = field_mappings[key]
     
@@ -626,16 +696,22 @@ def export_to_csv(data, fields, filename, field_mappings, chosen_delimiter, add_
     else:
         print("No issues with history data found in first 1000 issues")
     
-    # Look for specific issue
-    fhir_issue = df[df['key'] == 'FHIR-31820']
-    if not fhir_issue.empty:
-        print(f"\nFHIR-31820 in DataFrame: {fhir_issue.iloc[0][['key', 'Applied User', 'Applied Date']].to_dict()}")
-    else:
-        print("\nFHIR-31820 not found in DataFrame")
-    
-    # Save to CSV
+    # Save to CSV with proper quoting to handle JSON strings with special characters
     print(f"Saving CSV with {len(df.columns)} columns: {list(df.columns)[:10]}...")
-    df.to_csv(f"{filename}.csv", index=False, sep=chosen_delimiter)
+    parent = os.path.dirname(filename)
+    if parent:
+        os.makedirs(parent, exist_ok=True)
+    # Ensure History column (and other JSON fields) are properly quoted
+    # QUOTE_MINIMAL quotes fields containing delimiter, quotechar, or lineterminator
+    # This should handle JSON strings with commas, quotes, and newlines properly
+    df.to_csv(
+        f"{filename}.csv", 
+        index=False, 
+        sep=chosen_delimiter,
+        quoting=csv.QUOTE_MINIMAL,  # Quote fields containing special characters
+        escapechar=None,  # Use double-quote escaping (default)
+        doublequote=True  # Escape quotes by doubling them
+    )
     row_count = len(df)
     
     # Report on CSV
@@ -652,7 +728,14 @@ def export_to_csv(data, fields, filename, field_mappings, chosen_delimiter, add_
         if not applied_rows.empty:
             print(f"\nFound {len(applied_rows)} rows with history data")
             print("Sample rows with history data:")
-            sample_cols = ['key'] + history_cols
+            # Get the renamed column name for 'key', or use 'key' if it wasn't renamed
+            key_col = rename_map.get('key', 'key')
+            # Use the renamed column if it exists in the DataFrame, otherwise try 'key'
+            if key_col not in df.columns and 'key' in df.columns:
+                key_col = 'key'
+            elif key_col not in df.columns and 'Issue' in df.columns:
+                key_col = 'Issue'
+            sample_cols = [key_col] + history_cols if key_col in df.columns else history_cols
             print(applied_rows[sample_cols].head(5).to_string())
     
     return row_count
@@ -671,6 +754,9 @@ def export_to_markdown(data, fields, filename, field_mappings):
         if history_field not in fields:
             fields.append(history_field)
     
+    parent = os.path.dirname(filename)
+    if parent:
+        os.makedirs(parent, exist_ok=True)
     with open(f"{filename}.md", 'w', encoding='utf-8') as file:
         mapped_fields = [field_mappings.get(field, field) for field in fields]
         file.write('| ' + ' | '.join(mapped_fields) + ' |\n')
@@ -694,8 +780,19 @@ def export_to_markdown(data, fields, filename, field_mappings):
 
 def load_csv_to_dict(csv_file, field_mappings):
     """Load CSV file back into dictionary format compatible with the export functions."""
-    # Read CSV
-    df = pd.read_csv(csv_file)
+    # Read CSV - pandas handles QUOTE_MINIMAL automatically
+    # Try reading with explicit parameters first, fall back to default if needed
+    try:
+        df = pd.read_csv(
+            csv_file,
+            quoting=csv.QUOTE_MINIMAL,
+            doublequote=True
+        )
+    except Exception as e:
+        # Fall back to default reading if there are any issues
+        print(f"Warning: Could not read CSV with explicit quoting parameters: {e}")
+        print("Falling back to default CSV reading...")
+        df = pd.read_csv(csv_file)
     
     # Create reverse mapping for column names
     reverse_mapping = {v: k for k, v in field_mappings.items()}
@@ -737,7 +834,7 @@ def load_csv_to_dict(csv_file, field_mappings):
     return data
 
 def second_pass_processing(input_file, output_file, history_field_specs, bearer_token, export_format, 
-                          delimiter, add_type, batch_size, cache_dir, cache_enabled, filter_resolved):
+                          delimiter, add_type, batch_size, cache_dir, cache_enabled, filter_resolved, history_json_file=None):
     """Process the second pass of a two-pass approach, adding history data to an existing CSV."""
     print(f"Loading data from {input_file}...")
     
@@ -760,7 +857,8 @@ def second_pass_processing(input_file, output_file, history_field_specs, bearer_
             batch_size, 
             cache_dir, 
             cache_enabled,
-            filter_resolved
+            filter_resolved,
+            history_json_file
         )
         
         # Debug: Check if history fields were added
@@ -803,7 +901,8 @@ def second_pass_processing(input_file, output_file, history_field_specs, bearer_
             print(f"History field mappings: {history_mappings}")
             
             fields = list(field_mappings.keys())  # Use all available fields
-            csv_row_count = export_to_csv(data, fields, output_file, field_mappings, delimiter, add_type)
+            exclude_history = history_json_file is not None
+            csv_row_count = export_to_csv(data, fields, output_file, field_mappings, delimiter, add_type, exclude_history_column=exclude_history)
             print(f"Data exported to CSV successfully with {csv_row_count} rows in file: {output_file}.csv")
 
             # Debug: Check first few rows of exported CSV
@@ -861,6 +960,8 @@ if __name__ == "__main__":
                    help="Only process history for issues with resolution dates")
     parser.add_argument("--max-retries", type=int, default=5,
                    help="Maximum number of retry attempts for API calls (default: 5)")
+    parser.add_argument("--history-json-file",
+                   help="Path to save History data as separate JSON file (recommended for large datasets). If not specified, History is stored in CSV column (legacy mode).")
 
     args = parser.parse_args()
     
@@ -884,6 +985,15 @@ if __name__ == "__main__":
         # Parse history field specifications if provided
         history_field_specs = parse_history_field_specs(args.history)
         
+        # Determine history JSON file path
+        history_json_file = None
+        if args.history_json_file:
+            history_json_file = args.history_json_file
+        elif args.history and args.output:
+            # Auto-generate history JSON file path based on output filename
+            history_json_file = f"{args.output}_history.json"
+            print(f"Auto-generating History JSON file path: {history_json_file}")
+        
         # Second pass mode
         if args.second_pass_input:
             print("Running in second pass mode...")
@@ -898,7 +1008,8 @@ if __name__ == "__main__":
                 args.batch_size,
                 args.cache_dir,
                 args.cache,
-                args.filter_resolved
+                args.filter_resolved,
+                history_json_file
             )
             if not success:
                 sys.exit(1)
@@ -913,12 +1024,16 @@ if __name__ == "__main__":
                 
                 # First pass: Fetch issues without history
                 print("Fetching issue data from JIRA...")
-                data_to_export = query_jira(args.url, query_params, BEARER_TOKEN, fields)
-                print(f"Successfully fetched {len(data_to_export)} issues")
+                raw_data = query_jira(args.url, query_params, BEARER_TOKEN, fields)
+                print(f"Successfully fetched {len(raw_data)} issues")
+                
+                # Process raw data to extract specific fields
+                print("Processing raw JIRA data...")
+                data_to_export = process_raw_jira_data(raw_data, fields)
                 
                 # Sort data if needed
-                if data_to_export and 'fields' in data_to_export[0] and 'resolutiondate' in data_to_export[0]['fields']:
-                    data_to_export.sort(key=lambda x: parse_resolution_date(x.get('fields', {}).get('resolutiondate', '9999-12-31T23:59:59.000+0000')))
+                if data_to_export and 'fields.resolutiondate' in data_to_export[0]:
+                    data_to_export.sort(key=lambda x: parse_resolution_date(x.get('fields.resolutiondate', '9999-12-31T23:59:59.000+0000')))
                 
                 # Export data to CSV for second pass
                 print(f"Exporting first pass data to CSV: {args.output}.csv")
@@ -934,8 +1049,12 @@ if __name__ == "__main__":
                 
                 # Fetch issues
                 print("Fetching issue data from JIRA...")
-                data_to_export = query_jira(args.url, query_params, BEARER_TOKEN, fields)
-                print(f"Successfully fetched {len(data_to_export)} issues")
+                raw_data = query_jira(args.url, query_params, BEARER_TOKEN, fields)
+                print(f"Successfully fetched {len(raw_data)} issues")
+                
+                # Process raw data to extract specific fields
+                print("Processing raw JIRA data...")
+                data_to_export = process_raw_jira_data(raw_data, fields)
                 
                 # Process history data if requested
                 if history_field_specs:
@@ -947,18 +1066,22 @@ if __name__ == "__main__":
                         args.batch_size,
                         args.cache_dir,
                         args.cache,
-                        args.filter_resolved
+                        args.filter_resolved,
+                        history_json_file
                     )
 
                 # Sort data if needed
-                if data_to_export and 'fields' in data_to_export[0] and 'resolutiondate' in data_to_export[0]['fields']:
-                    data_to_export.sort(key=lambda x: parse_resolution_date(x.get('fields', {}).get('resolutiondate', '9999-12-31T23:59:59.000+0000')))
+                if data_to_export and 'fields.resolutiondate' in data_to_export[0]:
+                    data_to_export.sort(key=lambda x: parse_resolution_date(x.get('fields.resolutiondate', '9999-12-31T23:59:59.000+0000')))
 
                 # Export data
                 if args.export_format in ['csv', 'both']:
                     print(f"Exporting data to CSV: {args.output}.csv")
-                    csv_row_count = export_to_csv(data_to_export, fields, args.output, field_mappings, args.delimiter, args.add_type)
+                    exclude_history = history_json_file is not None
+                    csv_row_count = export_to_csv(data_to_export, fields, args.output, field_mappings, args.delimiter, args.add_type, exclude_history_column=exclude_history)
                     print(f"Data exported to CSV successfully with {csv_row_count} rows")
+                    if history_json_file:
+                        print(f"History data saved to separate JSON file: {history_json_file}")
 
                 if args.export_format in ['markdown', 'both']:
                     print(f"Exporting data to Markdown: {args.output}.md")

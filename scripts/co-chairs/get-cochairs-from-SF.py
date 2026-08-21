@@ -1,3 +1,41 @@
+"""
+This script retrieves Salesforce Contact records associated with specified HL7 leadership or committee badges.
+It filters for active badges only and allows optional date-based filtering for badge award and expiration windows.
+Results can be exported to CSV files for further analysis or outreach.
+
+USAGE:
+    python fetch_hl7_contacts.py -c path/to/config.yaml -o contacts.csv [-ao accelerator_only.csv]
+
+ARGUMENTS:
+    -c / --config              Path to the YAML configuration file (required).
+    -o / --output              Path to the output CSV file for contacts with included badges (optional but recommended).
+    -ao / --accelerator-output Optional path to a separate CSV file for HL7 Co-Chairs who only have accelerator badges.
+
+CONFIGURATION FILE (YAML format) must define:
+    prod_server:               Salesforce instance URL (e.g., https://hl7.my.salesforce.com)
+    version:                   Salesforce API version (e.g., 60.0)
+    client_id:                 Salesforce connected app client ID
+    client_secret:             Salesforce connected app client secret
+    username:                  Salesforce username
+    password:                  Salesforce password (+ security token, if required)
+    co-chair_badges:           List of badge names to include (e.g., HL7 Co-Chair, TSC, FMG, etc.)
+    co-chair_exclusion_badges: List of badge names that exclude the contact if present
+    accelerator_badges:        List of badge names considered as accelerator-related
+    exclude_contact_ids:       List of Salesforce Contact IDs to always exclude
+    include_contact_ids:       List of Salesforce Contact IDs to always include
+    start_date:                Start date (YYYY-MM-DD) for filtering badge activity
+    end_date:                  End date (YYYY-MM-DD) for filtering badge activity
+
+NOTES:
+    - The script only retrieves **active** badges (OrderApi__Is_Active__c = true).
+    - Badge award and expiration dates are used to determine if the badge was active during the specified time window.
+    - All badge filtering is case-sensitive and based on exact name matching.
+    - Requires internet access and valid Salesforce API credentials.
+
+EXAMPLE:
+    python fetch_hl7_contacts.py -c config.yaml -o output.csv -ao accelerator_only.csv
+"""
+
 import requests
 import yaml
 import argparse
@@ -28,15 +66,24 @@ def get_access_token(config):
 def build_query(badge_names):
     escaped_badges = [f"'{badge}'" for badge in badge_names]
     joined = ','.join(escaped_badges)
-    subquery = f"SELECT OrderApi__Contact__c FROM OrderApi__Badge__c WHERE OrderApi__Badge_Type__r.Name IN ({joined})"
+
+    subquery = (
+        f"SELECT OrderApi__Contact__c FROM OrderApi__Badge__c "
+        f"WHERE OrderApi__Badge_Type__r.Name IN ({joined}) "
+        f"AND OrderApi__Is_Active__c = true"
+    )
+
     inner = (
         "SELECT Id, FirstName, LastName, Email, "
-        "(SELECT OrderApi__Badge_Type__r.Name, OrderApi__Is_Active__c, OrderApi__Awarded_Date__c, OrderApi__Expired_Date__c "
-        "FROM OrderApi__Badges__r) "
+        "(SELECT OrderApi__Badge_Type__r.Name, OrderApi__Is_Active__c, "
+        "OrderApi__Awarded_Date__c, OrderApi__Expired_Date__c "
+        "FROM OrderApi__Badges__r "
+        f"WHERE OrderApi__Badge_Type__r.Name IN ({joined}) "
+        f"AND OrderApi__Is_Active__c = true) "
         f"FROM Contact WHERE Id IN ({subquery})"
     )
-    return urllib.parse.quote(inner, safe='')
 
+    return urllib.parse.quote(inner, safe='')
 
 def fetch_contacts(config, access_token):
     query = build_query(config['co-chair_badges'])

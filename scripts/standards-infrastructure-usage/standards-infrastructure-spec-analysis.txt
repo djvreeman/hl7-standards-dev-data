@@ -1,4 +1,5 @@
 # SOP operating model: inline JQL, created >= -400d (not filter 24407).
+# Latest scripts: https://github.com/djvreeman/hl7-standards-dev-data
 # See scripts/documentation/README-standards-infrastructure-specs.md
 mkdir -p data/working/issue-analysis/2026/lookback
 python3 scripts/parse-jira-filter-export-csv-md.py \

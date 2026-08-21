@@ -1,6 +1,8 @@
 # SOP: Specifications on HL7 Build and Jira Feedback Infrastructure
 
-Run from the `hl7-standards-dev-data` repo root. This produces the SISC rate-model cells **N**, **T**, and **N − T**.
+Run from the `hl7-standards-dev-data` repo root. This produces the SISC rate-model cells **N**, **T**, and **N − T**. Analyzer and reports live under `scripts/standards-infrastructure-usage/` and `data/working/standards-infrastructure-usage/` (not the ballot-participation pipeline).
+
+Latest scripts: [github.com/djvreeman/hl7-standards-dev-data](https://github.com/djvreeman/hl7-standards-dev-data)
 
 ## Operating model
 
@@ -46,13 +48,13 @@ python3 scripts/parse-builds-web.py --recent --days 365
 **3. Run the analyzer** (lookback and as-of date must match the inputs):
 
 ```bash
-python3 scripts/ballot-participation/ballot-infrastructure-specs-analyze.py \
+python3 scripts/standards-infrastructure-usage/standards-infrastructure-specs-analyze.py \
   --issues-csv data/working/issue-analysis/2026/lookback/YYYYMMDD-all-spec-feedback-issues-400d.csv \
   --recent-builds-csv data/working/builds/<timestamp>-recent-builds.csv \
-  -o data/working/ballot-participation/reports/YYYY-MM-DD-standards-infrastructure-specs.md \
+  -o data/working/standards-infrastructure-usage/reports/YYYY-MM-DD-standards-infrastructure-specs.md \
   --lookback-days 365 \
   --data-gathering-date YYYY-MM-DD \
-  --csv data/working/ballot-participation/reports/YYYY-MM-DD-standards-infrastructure-specs.csv
+  --csv data/working/standards-infrastructure-usage/reports/YYYY-MM-DD-standards-infrastructure-specs.csv
 ```
 
 If the four identity checks on the Full universe row fail, the script exits non-zero. If the issues extract ends more than a week before the as-of date, it warns that T will undercount.

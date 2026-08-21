@@ -61,13 +61,17 @@
 #
 #   python3 scripts/parse-builds-web.py --recent --days 365
 #
-#   python3 scripts/ballot-participation/ballot-infrastructure-specs-analyze.py \
+#   python3 scripts/standards-infrastructure-usage/standards-infrastructure-specs-analyze.py \
 #       --issues-csv data/working/issue-analysis/YYYY/YYYY-lookback/all-spec-feedback-issues.csv \
 #       --recent-builds-csv data/working/builds/<timestamp>-recent-builds.csv \
-#       -o data/working/ballot-participation/reports/YYYY-MM-DD-standards-infrastructure-specs.md \
+#       -o data/working/standards-infrastructure-usage/reports/YYYY-MM-DD-standards-infrastructure-specs.md \
 #       --lookback-days 365 \
 #       --data-gathering-date YYYY-MM-DD \
-#       --csv data/working/ballot-participation/reports/YYYY-MM-DD-standards-infrastructure-specs.csv
+#       --csv data/working/standards-infrastructure-usage/reports/YYYY-MM-DD-standards-infrastructure-specs.csv
+#
+# === Source ===
+#   https://github.com/djvreeman/hl7-standards-dev-data
+#   SOP: scripts/documentation/README-standards-infrastructure-specs.md
 #
 # === Author ===
 #   Daniel J. Vreeman, PT, DPT, MS, FACMI, FIAHSI
@@ -1587,13 +1591,13 @@ Examples:
 
   python3 scripts/parse-builds-web.py --recent --days 365
 
-  python3 scripts/ballot-participation/ballot-infrastructure-specs-analyze.py \\
+  python3 scripts/standards-infrastructure-usage/standards-infrastructure-specs-analyze.py \\
       --issues-csv data/working/issue-analysis/2026/lookback/all-spec-feedback-issues.csv \\
-      --recent-builds-csv data/working/builds/20260818-162157-recent-builds.csv \\
-      -o data/working/ballot-participation/reports/2026-08-20-standards-infrastructure-specs.md \\
+      --recent-builds-csv data/working/builds/20260821-060233-recent-builds.csv \\
+      -o data/working/standards-infrastructure-usage/reports/2026-08-21-standards-infrastructure-specs.md \\
       --lookback-days 365 \\
-      --data-gathering-date 2026-08-20 \\
-      --csv data/working/ballot-participation/reports/2026-08-20-standards-infrastructure-specs.csv
+      --data-gathering-date 2026-08-21 \\
+      --csv data/working/standards-infrastructure-usage/reports/2026-08-21-standards-infrastructure-specs.csv
         """,
     )
     parser.add_argument(
